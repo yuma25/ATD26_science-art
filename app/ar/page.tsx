@@ -16,6 +16,7 @@ export default function ARPage() {
     isExiting,
     activeBadge,
     allBadges,
+    isLoaded,
     setupListeners,
     navigateHome,
     setShowSuccess,
@@ -31,6 +32,7 @@ export default function ARPage() {
       "mindar-image-system"?: {
         start: () => void;
         stop: () => void;
+        controller?: unknown;
       };
     };
     hasLoaded?: boolean;
@@ -69,8 +71,14 @@ export default function ARPage() {
 
   // 2. A-Frame シーンの動的生成 (PHOTO MODE と同じ手法)
   useEffect(() => {
-    // 💡 修正：allBadges が空でも、少なくともエンジンは起動させる
-    if (status === "started" && ready && arContainerRef.current) {
+    // 💡 修正：標本データのロード完了 (isLoaded) を待ってから注入を開始する
+    if (status === "started" && ready && isLoaded && arContainerRef.current) {
+      // 💡 修正：既に a-scene が存在する場合は再注入を避ける (二重注入による MindAR のクラッシュ防止)
+      if (arContainerRef.current.querySelector("a-scene")) {
+        console.log("⏭ AR Scene already exists, skipping injection.");
+        return;
+      }
+
       console.log("🛠 Injecting AR Scene HTML...");
       arContainerRef.current.innerHTML = "";
 
@@ -154,7 +162,7 @@ export default function ARPage() {
       if (sceneEl.hasLoaded) boot();
       else sceneEl.addEventListener("loaded", boot);
     }
-  }, [status, ready, allBadges, setupListeners]);
+  }, [status, ready, isLoaded, allBadges, setupListeners]);
 
   return (
     <div

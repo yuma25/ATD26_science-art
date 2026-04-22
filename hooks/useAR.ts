@@ -14,6 +14,7 @@ export const useAR = () => {
   const [isExiting, setIsExiting] = useState(false);
   const [activeBadge, setActiveBadge] = useState<Badge | null>(null);
   const [allBadges, setAllBadges] = useState<Badge[]>([]);
+  const [isLoaded, setIsLoaded] = useState(false);
 
   const progressRef = useRef(0);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
@@ -26,6 +27,7 @@ export const useAR = () => {
       "mindar-image-system"?: {
         start: () => void;
         stop: () => void;
+        controller?: unknown;
       };
     };
   }
@@ -40,9 +42,10 @@ export const useAR = () => {
     const sceneEl = document.querySelector("a-scene") as AFrameScene | null;
 
     // MindAR システムを明示的に停止 (A-Frame が消える前に)
-    if (sceneEl?.systems?.["mindar-image-system"]) {
+    const mindarSystem = sceneEl?.systems?.["mindar-image-system"];
+    if (mindarSystem && mindarSystem.controller) {
       try {
-        sceneEl.systems["mindar-image-system"].stop();
+        mindarSystem.stop();
       } catch (e) {
         console.error("Failed to stop MindAR system", e);
       }
@@ -167,6 +170,7 @@ export const useAR = () => {
         ]);
         setAllBadges(badges);
         acquiredBadgeIdsRef.current = myAcquiredIds;
+        setIsLoaded(true);
       }
     };
     init();
@@ -183,6 +187,7 @@ export const useAR = () => {
     isExiting,
     activeBadge,
     allBadges,
+    isLoaded,
     setupCamera,
     setupListeners,
     navigateHome: useCallback(() => {
