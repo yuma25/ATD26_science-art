@@ -1,71 +1,83 @@
-import { supabase } from "../lib/supabase";
-import { Badge } from "../types";
+import { supabase, supabaseAdmin } from "../lib/supabase";
+import { Badge, BadgeSchema, UserBadge } from "../types";
+import { Logger } from "../../server/lib/logger";
 
 export const BadgeService = {
   /**
    * すべてのバッジ情報を取得する
+   * ※確実に取得するためAdmin権限を使用
    */
   async getAllBadges(): Promise<Badge[]> {
-    if (!supabase) return [];
-    const { data, error } = await supabase
+    const client = supabaseAdmin || supabase;
+    const { data, error } = await client
       .from("badges")
       .select("*")
-      .order("created_at", { ascending: true });
+      .order("target_index", { ascending: true });
 
     if (error) {
-      console.error("Failed to fetch badges:", error.message);
+      Logger.error("FETCH_BADGES_FAILED", error);
       return [];
     }
-    return data || [];
+
+    console.log(`[Service] Fetched raw data count: ${data?.length || 0}`);
+
+    try {
+      return (data || []).map((badge) => BadgeSchema.parse(badge));
+    } catch (e) {
+      console.warn("[Service] Zod validation failed, returning raw data:", e);
+      return (data || []) as Badge[];
+    }
   },
 
   /**
-   * 特定ユーザーの獲得済みバッジIDリストを取得する
+   * ユーザーが獲得したバッジのID一覧を取得する
    */
   async getAcquiredBadgeIds(userId: string): Promise<string[]> {
-    if (!supabase) return [];
-    const { data, error } = await supabase
+    const client = supabaseAdmin || supabase;
+    const { data, error } = await client
       .from("user_badges")
       .select("badge_id")
       .eq("user_id", userId);
 
     if (error) {
-      console.error("Failed to fetch user badges:", error.message);
+      Logger.error("FETCH_ACQUIRED_BADGES_FAILED", error, { userId });
       return [];
     }
-    return (data || []).map((b) => b.badge_id);
+
+    return (data || []).map((row) => row.badge_id);
   },
 
   /**
-   * バッジ獲得を記録する
+   * バッジを獲得（保存）する
    */
-  async acquireBadge(userId: string, badgeId: string): Promise<boolean> {
-    if (!supabase) return false;
-    const { error } = await supabase.from("user_badges").insert({
-      user_id: userId,
-      badge_id: badgeId,
-      acquired_at: new Date().toISOString(),
-    });
+  async acquireBadge(
+    userId: string,
+    badgeId: string,
+  ): Promise<UserBadge | null> {
+    const client = supabaseAdmin || supabase;
+
+    // 日本時間のタイムスタンプ
+    const jstNow = new Date(Date.now() + 9 * 60 * 60 * 1000).toISOString();
+
+    const { data, error } = await client
+      .from("user_badges")
+      .insert([
+        {
+          user_id: userId,
+          badge_id: badgeId,
+          acquired_at: jstNow,
+        },
+      ])
+      .select()
+      .single();
 
     if (error) {
-      console.error("Failed to save badge acquisition:", error.message);
-      return false;
+      if (error.code === "23505") return null; // 重複
+      Logger.error("ACQUIRE_BADGE_FAILED", error, { userId, badgeId });
+      return null;
     }
-    return true;
-  },
 
-  /**
-   * 特定のバッジを既に持っているか確認する
-   */
-  async isAlreadyAcquired(userId: string, badgeId: string): Promise<boolean> {
-    if (!supabase) return false;
-    const { data, error } = await supabase
-      .from("user_badges")
-      .select("id")
-      .eq("user_id", userId)
-      .eq("badge_id", badgeId)
-      .maybeSingle();
-
-    return !!data && !error;
+    Logger.info("ACQUIRE_BADGE_SUCCESS", { userId, badgeId });
+    return data;
   },
 };

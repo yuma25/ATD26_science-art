@@ -128,5 +128,13 @@ DEV_LOG.md
 GEMINI.md
 TECH_NOTES.md
 
+# 内部的な開発ドキュメントとプロンプト集（非公開）
+docs/AI_INSTRUCTIONS.md
+docs/PROMPTS/
+docs/ISSUES/
+docs/PR/
+docs/DESIGN/
+docs/system-design-reference.md
+
 # Optional v8 coverage directory
 node_modules/.cache/

@@ -15,54 +15,6 @@ export const useHome = () => {
   >("prompt");
 
   /**
-   * 初期データのロード
-   */
-  const loadData = useCallback(async () => {
-    setSyncing(true);
-    try {
-      const user = await signInAnonymously();
-      if (user) {
-        setFullUserId(user.id);
-        const [allBadges, myAcquiredIds] = await Promise.all([
-          BadgeService.getAllBadges(),
-          BadgeService.getAcquiredBadgeIds(user.id),
-        ]);
-
-        // 1. 5つのモック標本を作成（これらは獲得済みとする）
-        const mockBadges: Badge[] = Array.from({ length: 5 }).map((_, i) => ({
-          id: `painting-00${i + 1}`,
-          name: `Specimen ${String.fromCharCode(65 + i)}`,
-          description: `Historical Archive #${i + 1}`,
-          color: ["#3e2f28", "#2563eb", "#10b981", "#f59e0b", "#ef4444"][i],
-          model_url: "/butterfly.glb",
-          target_index: i,
-        }));
-
-        // 2. 実在するバッジ（例：butterfly-001）を取得。なければモックの6番目を作成
-        const realBadge = allBadges.find((b) => b.id === "butterfly-001") || {
-          id: "butterfly-001",
-          name: "The Living Specimen",
-          description: "A real discovery waiting in AR",
-          color: "#8b5cf6",
-          model_url: "/butterfly.glb",
-          target_index: 5,
-        };
-
-        // 3. 5つのモック + 1つの実在バッジの計6つをセット
-        setBadges([...mockBadges, realBadge]);
-
-        // 4. 獲得済みリストの設定（モックの5つは必ず入れる）
-        const mockAcquiredIds = mockBadges.map((b) => b.id);
-        setAcquiredBadgeIds([...mockAcquiredIds, ...myAcquiredIds]);
-      }
-    } catch (error) {
-      console.error("Initialization error:", error);
-    } finally {
-      setSyncing(false);
-    }
-  }, []);
-
-  /**
    * カメラの先行許可リクエスト
    */
   const requestCameraPermission = useCallback(async () => {
@@ -78,27 +30,94 @@ export const useHome = () => {
     }
   }, []);
 
-  // データロード用
+  /**
+   * 初期データのロード
+   */
+  const loadData = useCallback(async () => {
+    setSyncing(true);
+    try {
+      const user = await signInAnonymously();
+      if (user) {
+        setFullUserId(user.id);
+        const [allBadges, myAcquiredIds] = await Promise.all([
+          BadgeService.getAllBadges(),
+          BadgeService.getAcquiredBadgeIds(user.id),
+        ]);
+
+        // 1. 5つのモック標本（獲得済み）
+        const mockBadges: Badge[] = Array.from({ length: 5 }).map((_, i) => ({
+          id: `mock-specimen-00${i + 1}`,
+          name: `Specimen ${String.fromCharCode(65 + i)}`,
+          description: `Historical Archive Record`,
+          color: ["#3e2f28", "#2563eb", "#10b981", "#f59e0b", "#ef4444"][i],
+          model_url: "/butterfly.glb",
+          target_index: 999,
+        }));
+
+        // 2. 6番目の枠（実データがあれば採用、なければ未知の枠として表示）
+        const realBadge = allBadges[0] || {
+          id: "unknown-specimen-006",
+          name: "Unknown Specimen",
+          description: "Yet to be discovered in the wild.",
+          color: "#8b5cf6",
+          model_url: "/butterfly.glb",
+          target_index: 0,
+        };
+
+        const displayBadges = [...mockBadges, realBadge];
+        setBadges(displayBadges);
+
+        // 3. 獲得済みリストの設定
+        const mockIds = mockBadges.map((b) => b.id);
+        setAcquiredBadgeIds([...mockIds, ...myAcquiredIds]);
+      }
+    } catch (error) {
+      console.error("❌ Roadmap Load Error:", error);
+    } finally {
+      setSyncing(false);
+    }
+  }, []);
+
+  // データロードとカメラ要求用
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     loadData();
-  }, [loadData]);
 
-  // パーミッションチェック用
+    // 💡 サイトアクセス時にカメラアクセスを要求
+    requestCameraPermission();
+
+    window.addEventListener("focus", loadData);
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") loadData();
+    };
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      window.removeEventListener("focus", loadData);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [loadData, requestCameraPermission]);
+
+  // パーミッション監視用
   useEffect(() => {
-    if (navigator.permissions && navigator.permissions.query) {
-      navigator.permissions
-        .query({ name: "camera" as PermissionName })
-        .then((result) => {
+    const checkPermission = async () => {
+      if (navigator.permissions && navigator.permissions.query) {
+        try {
+          const result = await navigator.permissions.query({
+            name: "camera" as PermissionName,
+          });
           setCameraPermission(result.state as "prompt" | "granted" | "denied");
           result.onchange = () => {
             setCameraPermission(
               result.state as "prompt" | "granted" | "denied",
             );
           };
-        })
-        .catch(() => {});
-    }
+        } catch (e) {
+          console.warn("Permissions API not supported for camera", e);
+        }
+      }
+    };
+    checkPermission();
   }, []);
 
   const isAcquired = (id: string) => acquiredBadgeIds.includes(id);

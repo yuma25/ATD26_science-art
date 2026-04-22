@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { useHome } from "../hooks/useHome";
 import { BadgeCard } from "../components/BadgeCard";
+import { calculateProgress } from "../backend/lib/logic";
 
 export default function Home() {
   const {
@@ -29,6 +30,8 @@ export default function Home() {
 
   const acquiredCount = badges.filter((b) => isAcquired(b.id)).length;
   const isComplete = badges.length > 0 && acquiredCount === badges.length;
+  const progressPercentage = calculateProgress(badges.length, acquiredCount);
+
   // コンプリート時に一度だけ時刻を記録
   useEffect(() => {
     if (isComplete && !completionTime) {
@@ -96,7 +99,7 @@ export default function Home() {
       {/* Main Content Area */}
       <main className="max-w-xl mx-auto px-8 pt-40 sm:pt-56 pb-40 relative flex-1 w-full z-10">
         <div className="relative">
-          {/* Roadmap Path (Subtle Energy Line) */}
+          {/* Roadmap Path (Dynamic SVG) */}
           <div className="absolute left-[50%] top-0 bottom-0 w-[4px] -translate-x-1/2 overflow-hidden opacity-40">
             {/* Background Path (Dashed) */}
             <div className="absolute inset-0 w-full h-full border-l border-dashed border-[#3e2f28]/10" />
@@ -105,7 +108,7 @@ export default function Home() {
             <motion.div
               initial={{ height: 0 }}
               animate={{
-                height: `${(acquiredCount / (badges.length || 1)) * 100}%`,
+                height: `${progressPercentage}%`,
               }}
               transition={{ duration: 1.5, ease: "easeOut" }}
               className="absolute top-0 w-full bg-amber-400 shadow-[0_0_10px_rgba(245,158,11,0.4)] z-10"

@@ -5,6 +5,19 @@ import { supabase, signInAnonymously } from "../backend/lib/supabase";
 import { Badge } from "../backend/types";
 import { BadgeService } from "../backend/services/badgeService";
 
+/**
+ * A-Frame 要素のための型定義
+ */
+interface ASceneElement extends HTMLElement {
+  pause: () => void;
+  hasLoaded: boolean;
+  systems: {
+    "mindar-image-system"?: {
+      start: () => void;
+    };
+  };
+}
+
 export const useAR = () => {
   const [status, setStatus] = useState<"init" | "loading" | "started">("init");
   const [isFound, setIsFound] = useState(false);
@@ -24,11 +37,12 @@ export const useAR = () => {
 
   const cleanupAR = useCallback(() => {
     if (timerRef.current) clearInterval(timerRef.current);
-    const sceneEl = document.querySelector("a-scene");
+    const sceneEl = document.querySelector("a-scene") as ASceneElement | null;
     if (sceneEl) {
       try {
-        // @ts-expect-error - AFRAME is global
-        if (sceneEl.pause) sceneEl.pause();
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const el = sceneEl as any;
+        if (typeof el.pause === "function") el.pause();
       } catch {
         /* ignore */
       }
@@ -52,7 +66,6 @@ export const useAR = () => {
     acquiredRef.current = true;
     acquiredBadgeIdsRef.current.push(badgeId);
     setShowSuccess(true);
-    // 自動で消えるタイマーを削除
 
     const userRes = await supabase?.auth.getUser();
     if (userRes?.data.user) {
@@ -89,7 +102,13 @@ export const useAR = () => {
     const targets = document.querySelectorAll("[mindar-image-target]");
     const ghostEl = document.querySelector("#ghost");
 
-    targets.forEach((targetEl, index) => {
+    targets.forEach((targetEl) => {
+      // ターゲットのインデックスを取得
+      const targetIndexAttr = targetEl.getAttribute("mindar-image-target");
+      const match = targetIndexAttr?.match(/targetIndex:\s*(\d+)/);
+      if (!match) return;
+      const index = parseInt(match[1]);
+
       targetEl.addEventListener("targetFound", () => {
         const badge = allBadges.find((b) => b.target_index === index);
         if (!badge) return;
@@ -129,10 +148,6 @@ export const useAR = () => {
         ]);
         setAllBadges(badges);
         acquiredBadgeIdsRef.current = myAcquiredIds;
-        if (myAcquiredIds.includes("butterfly-001")) {
-          setAcquired(true);
-          acquiredRef.current = true;
-        }
       }
     };
     init();
@@ -172,6 +187,26 @@ export const useAR = () => {
       allBadges.length > 0
     ) {
       sceneInjectedRef.current = true;
+
+      // 💡 DBにあるバッジデータの target_index に基づいて動的にエンティティを生成
+      const targetEntities = allBadges
+        .map(
+          (badge) => `
+        <a-entity mindar-image-target="targetIndex: ${badge.target_index}">
+          <a-entity id="model-container-${badge.target_index}" visible="false">
+            <a-entity animation="property: rotation; to: 0 0 360; dur: 12000; easing: linear; loop: true">
+              <a-entity position="0.5 0 0.4">
+                <a-entity animation="property: rotation; from: 90 -20 -15; to: 90 20 15; dur: 4000; easing: easeInOutSine; dir: alternate; loop: true">
+                  <a-gltf-model src="#m" scale="2.5 2.5 2.5" animation-mixer="clip: *; loop: repeat; timeScale: 1.2"></a-gltf-model>
+                </a-entity>
+              </a-entity>
+            </a-entity>
+          </a-entity>
+        </a-entity>
+      `,
+        )
+        .join("");
+
       arContainerRef.current.innerHTML = `
         <a-scene mindar-image="imageTargetSrc: /targets.mind; autoStart: false; uiLoading: no; uiScanning: no;" color-space="sRGB" renderer="colorManagement: true, physicallyCorrectLights: true, exposure: 1.5, alpha: true" vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false" loading-screen="enabled: false" embedded style="width: 100%; height: 100%;">
           <a-assets><a-asset-item id="m" src="/butterfly.glb"></a-asset-item></a-assets>
@@ -180,33 +215,19 @@ export const useAR = () => {
               <a-gltf-model src="#m" scale="0.08 0.08 0.08" opacity="0.3" animation="property: rotation; to: 0 360 0; dur: 10000; easing: linear; loop: true"></a-gltf-model>
             </a-entity>
           </a-camera>
-          ${[0, 1, 2, 3, 4, 5]
-            .map(
-              (i) => `
-            <a-entity mindar-image-target="targetIndex: ${i}">
-              <a-entity id="model-container-${i}" visible="false">
-                <a-entity animation="property: rotation; to: 0 0 360; dur: 12000; easing: linear; loop: true">
-                  <a-entity position="0.5 0 0.4">
-                    <a-entity animation="property: rotation; from: 90 -20 -15; to: 90 20 15; dur: 4000; easing: easeInOutSine; dir: alternate; loop: true">
-                      <a-gltf-model src="#m" scale="2.5 2.5 2.5" animation-mixer="clip: *; loop: repeat; timeScale: 1.2"></a-gltf-model>
-                    </a-entity>
-                  </a-entity>
-                </a-entity>
-              </a-entity>
-            </a-entity>
-          `,
-            )
-            .join("")}
+          ${targetEntities}
         </a-scene>
       `;
 
-      const sceneEl = arContainerRef.current.querySelector("a-scene");
+      const sceneEl = arContainerRef.current.querySelector(
+        "a-scene",
+      ) as ASceneElement | null;
 
       const boot = () => {
-        // @ts-expect-error - AFRAME is global
-        if (sceneEl?.systems?.["mindar-image-system"]) {
-          // @ts-expect-error - AFRAME is global
-          sceneEl.systems["mindar-image-system"].start();
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        if ((sceneEl as any)?.systems?.["mindar-image-system"]) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          (sceneEl as any).systems["mindar-image-system"].start();
         }
         setTimeout(() => window.dispatchEvent(new Event("resize")), 2000);
         setTimeout(() => {
@@ -217,9 +238,8 @@ export const useAR = () => {
         }, 3000);
       };
 
-      // @ts-expect-error - AFRAME is global
-      if (sceneEl?.hasLoaded) boot();
-      // @ts-expect-error - AFRAME is global
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      if ((sceneEl as any)?.hasLoaded) boot();
       else sceneEl?.addEventListener("loaded", boot);
     }
   }, [status, allBadges, setupListeners]);

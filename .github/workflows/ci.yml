@@ -1,4 +1,4 @@
-name: CI/CD (Professional)
+name: CI/CD (ATD26)
 
 on:
   push:
@@ -14,23 +14,7 @@ jobs:
   check:
     name: Lint and Build Check
     runs-on: ubuntu-latest
-    timeout-minutes: 15
-
-    # Ephemeral Database (ビルド・テスト用の一時的なDB)
-    services:
-      postgres:
-        image: postgres:15
-        env:
-          POSTGRES_USER: test_user
-          POSTGRES_PASSWORD: test_password
-          POSTGRES_DB: template_test
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
+    timeout-minutes: 10
 
     steps:
       - uses: actions/checkout@v4
@@ -38,12 +22,12 @@ jobs:
       - name: Install pnpm
         uses: pnpm/action-setup@v4
         with:
-          version: 9
+          version: 10
 
       - name: Install Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: "pnpm"
 
       - name: Install dependencies
@@ -52,24 +36,9 @@ jobs:
       - name: Lint check
         run: pnpm run lint
 
-      # データベースの初期化とビルド検証
-      - name: Database & Build Check
-        run: |
-          if [ -f "prisma/schema.prisma" ]; then
-            pnpm prisma generate
-            pnpm prisma db push --accept-data-loss
-          fi
-          # build スクリプトがある場合のみ実行
-          if npm run | grep -q "build"; then
-            pnpm run build
-          else
-            echo "No build script found, skipping build check."
-          fi
+      - name: Build Check
+        run: pnpm run build
         env:
-          DATABASE_URL: postgresql://test_user:test_password@localhost:5432/template_test
-          DIRECT_URL: postgresql://test_user:test_password@localhost:5432/template_test
-          AUTH_SECRET: CI_AUTH_SECRET_PLACEHOLDER
-          # 認証等のダミー環境変数
-          AUTH_GITHUB_ID: dummy
-          AUTH_GITHUB_SECRET: dummy
-          ADMIN_EMAIL: admin@example.com
+          NEXT_PUBLIC_SUPABASE_URL: "https://example.supabase.co"
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: "dummy-key"
+          # その他ビルドに必要な環境変数があればここに追加

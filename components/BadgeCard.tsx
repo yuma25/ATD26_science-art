@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useRouter } from "next/navigation";
 import {
   Lock,
+  Box,
   Wind,
   Bug,
   Leaf,
@@ -11,49 +13,54 @@ import {
   Flower2,
   CircleDot,
   LucideIcon,
-  PenTool,
   MapPin,
 } from "lucide-react";
 import { Badge } from "../backend/types";
 
-const IconMap: Record<string, LucideIcon> = {
-  "painting-001": Bug, // 標本 A
-  "painting-002": Flower2, // 標本 B
-  "painting-003": Leaf, // 標本 C
-  "painting-004": Feather, // 標本 D
-  "painting-005": CircleDot, // 標本 E
-  "painting-006": MapPin, // 標本 F
-  "butterfly-001": Bug,
-};
+// ターゲットインデックスに基づいたアイコンの割り当て
+const IconList: LucideIcon[] = [Bug, Flower2, Leaf, Feather, CircleDot, MapPin];
 
 interface BadgeCardProps {
   badge: Badge;
   isAcquired: boolean;
+  onSaveScroll?: () => void;
 }
 
-export const BadgeCard = ({ badge, isAcquired }: BadgeCardProps) => {
+export const BadgeCard = ({
+  badge,
+  isAcquired,
+  onSaveScroll,
+}: BadgeCardProps) => {
+  const router = useRouter();
   const [showActions, setShowActions] = useState(false);
-  const Icon = IconMap[badge.id] || CircleDot;
+
+  // インデックスに基づいてアイコンを選択（なければ CircleDot）
+  const Icon = IconList[badge.target_index] || CircleDot;
   const locked = !isAcquired;
 
+  // IDから一意な回転角を生成（NaNにならないように安全な実装）
+  const rotation = useMemo(() => {
+    if (!isAcquired) return 0;
+    // IDの文字列を数値に変換して決定論的に回転方向を決める
+    const charCodeSum = badge.id
+      .split("")
+      .reduce((acc, char) => acc + char.charCodeAt(0), 0);
+    return charCodeSum % 2 === 0 ? 1.5 : -1.5;
+  }, [badge.id, isAcquired]);
+
   const handleOpenViewer = () => {
-    window.location.assign(
+    if (onSaveScroll) onSaveScroll();
+    router.push(
       `/viewer?model=${encodeURIComponent(badge.model_url)}&name=${encodeURIComponent(badge.name)}`,
     );
   };
 
   const handleRelease = () => {
-    window.location.assign(
+    if (onSaveScroll) onSaveScroll();
+    router.push(
       `/release?model=${encodeURIComponent(badge.model_url)}&name=${encodeURIComponent(badge.name)}`,
     );
   };
-
-  // アルバム風のランダムな傾きを生成
-  const rotation = isAcquired
-    ? parseInt(badge.id.slice(-1)) % 2 === 0
-      ? 1.5
-      : -1.5
-    : 0;
 
   return (
     <motion.div
@@ -64,7 +71,7 @@ export const BadgeCard = ({ badge, isAcquired }: BadgeCardProps) => {
       className="relative flex justify-center w-full group"
       style={{ rotate: `${rotation}deg` }}
     >
-      {/* 貼り付け用のマスキングテープ (さらに不規則に) */}
+      {/* 貼り付け用のマスキングテープ */}
       {!locked && (
         <>
           <div className="tape -top-5 left-1/2 -translate-x-1/2 opacity-80" />
@@ -75,7 +82,7 @@ export const BadgeCard = ({ badge, isAcquired }: BadgeCardProps) => {
       <div
         onClick={() => !locked && !showActions && setShowActions(true)}
         className={`
-          relative w-full max-w-[300px] min-h-[320px] p-10 flex flex-col items-center justify-center text-center transition-all duration-500
+          relative w-full max-w-[300px] min-h-[340px] p-8 flex flex-col items-center justify-center text-center transition-all duration-500
           ${locked ? "border-2 border-dashed border-[#3e2f28]/10 bg-white/30 grayscale sepia opacity-40" : "bg-[#fffdf5] shadow-md border border-[#dcd4c0]"}
         `}
       >
@@ -83,9 +90,12 @@ export const BadgeCard = ({ badge, isAcquired }: BadgeCardProps) => {
           {locked ? (
             <motion.div
               key="locked"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
               className="flex flex-col items-center gap-4"
             >
-              <div className="w-24 h-24 border border-dashed border-[#3e2f28]/20 rounded-full flex items-center justify-center">
+              <div className="w-24 h-24 border border-dashed border-[#3e2f28]/20 rounded-full flex items-center justify-center text-[#3e2f28]/20">
                 <Lock size={24} strokeWidth={1} />
               </div>
               <p className="text-[11px] font-bold uppercase tracking-widest opacity-40">
@@ -95,58 +105,81 @@ export const BadgeCard = ({ badge, isAcquired }: BadgeCardProps) => {
           ) : showActions ? (
             <motion.div
               key="actions"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="w-full space-y-6"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 10 }}
+              className="w-full flex flex-col items-center text-left"
+              onClick={(e) => e.stopPropagation()}
             >
-              <div className="border-b border-[#3e2f28]/20 pb-4 mb-6">
-                <p className="font-data text-[8px] uppercase tracking-[0.2em] mb-2 opacity-50">
+              <div className="absolute top-4 right-4 text-[7px] opacity-30 font-mono">
+                REG: {badge.id.slice(0, 8)}
+              </div>
+
+              <div className="w-full border-b border-[#3e2f28]/20 pb-4 mb-6">
+                <p className="font-mono text-[7px] font-bold text-black/40 uppercase tracking-[0.2em] mb-1">
                   Journal Entry
                 </p>
-                <h2 className="text-2xl font-bold italic font-serif text-[#3e2f28]">
+                <h2 className="text-xl font-bold italic font-serif leading-none">
                   {badge.name}
                 </h2>
               </div>
 
-              <div className="space-y-3">
+              <div className="w-full grid grid-cols-2 gap-4 mb-8">
+                <div>
+                  <label className="block text-[6px] uppercase font-bold opacity-30">
+                    Status
+                  </label>
+                  <p className="text-[8px] font-mono font-bold text-blue-600">
+                    PRESERVED
+                  </p>
+                </div>
+                <div>
+                  <label className="block text-[6px] uppercase font-bold opacity-30">
+                    Type
+                  </label>
+                  <p className="text-[8px] font-mono">DIGITAL_SPECIMEN</p>
+                </div>
+              </div>
+
+              {/* Action Protocols */}
+              <div className="w-full space-y-2 border-t border-dashed border-black/10 pt-6">
                 <button
                   onClick={handleOpenViewer}
-                  className="w-full py-3 bg-[#3e2f28] text-[#fdfaf2] flex items-center justify-center gap-3 hover:bg-[#5a463b] transition-colors shadow-md"
+                  className="w-full py-2.5 bg-[#3e2f28] text-[#fdfaf2] flex items-center justify-center gap-2 hover:bg-[#5a463b] transition-colors cursor-pointer"
                 >
-                  <PenTool size={16} />
-                  <span className="font-data text-[10px] uppercase tracking-widest font-bold text-white">
-                    Detailed Sketch
+                  <Box size={14} strokeWidth={1.5} />
+                  <span className="font-data text-[8px] uppercase tracking-[0.1em] font-bold text-white">
+                    Observe
                   </span>
                 </button>
 
                 <button
                   onClick={handleRelease}
-                  className="w-full py-3 border border-[#3e2f28] text-[#3e2f28] flex items-center justify-center gap-3 hover:bg-[#3e2f28]/5 transition-colors"
+                  className="w-full py-2.5 border border-[#3e2f28] text-[#3e2f28] flex items-center justify-center gap-2 hover:bg-[#3e2f28]/5 transition-colors cursor-pointer"
                 >
-                  <Wind size={16} />
-                  <span className="font-data text-[10px] uppercase tracking-widest font-bold">
-                    Release to Wild
+                  <Wind size={14} strokeWidth={1.5} />
+                  <span className="font-data text-[8px] uppercase tracking-[0.1em] font-bold">
+                    Release
                   </span>
                 </button>
-              </div>
 
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setShowActions(false);
-                }}
-                className="pt-6 text-[9px] font-mono uppercase tracking-[0.3em] opacity-30 hover:opacity-100 transition-opacity"
-              >
-                Close Page
-              </button>
+                <button
+                  onClick={() => setShowActions(false)}
+                  className="w-full pt-4 text-[7px] font-mono uppercase tracking-widest text-black/30 hover:text-black transition-colors text-center cursor-pointer"
+                >
+                  Close
+                </button>
+              </div>
             </motion.div>
           ) : (
             <motion.div
               key="sketch"
-              className="flex flex-col items-center gap-6 w-full"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="flex flex-col items-center gap-6 w-full cursor-pointer"
             >
-              {/* スケッチアイコン（細い線） */}
+              {/* スケッチアイコン */}
               <div className="relative p-6">
                 <Icon
                   size={80}

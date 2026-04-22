@@ -1,11 +1,28 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
-import { useSearchParams } from "next/navigation";
+import { useEffect, useState, useRef, Suspense } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import { Sparkles } from "lucide-react";
+import { CloseButton } from "../../components/layout/CloseButton";
 
-export default function ReleasePage() {
+/**
+ * A-Frame シーン要素のためのインターフェース
+ */
+interface ASceneElement extends HTMLElement {
+  renderer: {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    render: (scene: any, camera: any) => void;
+  };
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  camera: any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  object3D: any;
+  canvas: HTMLCanvasElement;
+}
+
+function ReleaseContent() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const modelUrl = searchParams.get("model") || "/butterfly.glb";
   const name = searchParams.get("name") || "標本";
 
@@ -50,76 +67,6 @@ export default function ReleasePage() {
     }
   };
 
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setMounted(true);
-    return () => cleanupAR();
-  }, []);
-
-  /**
-   * 写真を撮影して保存する
-   */
-  const takePhoto = async () => {
-    if (isCapturing) return;
-    setIsCapturing(true);
-
-    try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const sceneEl = document.querySelector("a-scene") as any;
-      const videoEl = document.querySelector("video");
-      if (!sceneEl || !videoEl) {
-        console.error("Required elements not found");
-        return;
-      }
-
-      // 1. A-Frame / Three.js のレンダリングを強制実行して最新のバッファを確保
-      const renderer = sceneEl.renderer;
-      const camera = sceneEl.camera;
-      if (renderer && camera) {
-        renderer.render(sceneEl.object3D, camera);
-      }
-
-      // 2. キャンバスの準備
-      const canvas = document.createElement("canvas");
-      const ctx = canvas.getContext("2d");
-      if (!ctx) return;
-
-      // ビデオの実際の解像度を使用
-      const width = videoEl.videoWidth;
-      const height = videoEl.videoHeight;
-      canvas.width = width;
-      canvas.height = height;
-
-      // 3. カメラ映像を書き込む（反転などが必要な場合はここで調整）
-      ctx.drawImage(videoEl, 0, 0, width, height);
-
-      // 4. A-Frameのキャンバスを取得して重ねる
-      const threeCanvas = sceneEl.canvas;
-      if (threeCanvas) {
-        ctx.drawImage(threeCanvas, 0, 0, width, height);
-      }
-
-      // 5. ダウンロード処理
-      const dataUrl = canvas.toDataURL("image/png", 1.0);
-      const link = document.createElement("a");
-      const timestamp = new Date()
-        .toISOString()
-        .replace(/[:.]/g, "-")
-        .slice(0, 19);
-      link.download = `Specimen_${name}_${timestamp}.png`;
-      link.href = dataUrl;
-
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    } catch (e) {
-      console.error("Capture failed", e);
-      alert("写真の保存に失敗しました。カメラの権限等を確認してください。");
-    } finally {
-      setTimeout(() => setIsCapturing(false), 800);
-    }
-  };
-
   const startAR = async () => {
     setStatus("loading");
     try {
@@ -141,6 +88,70 @@ export default function ReleasePage() {
       setStatus("started");
     } catch {
       setStatus("init");
+    }
+  };
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setMounted(true);
+    startAR();
+    return () => cleanupAR();
+  }, []);
+
+  /**
+   * 写真を撮影して保存する
+   */
+  const takePhoto = async () => {
+    if (isCapturing) return;
+    setIsCapturing(true);
+
+    try {
+      const sceneEl = document.querySelector("a-scene") as ASceneElement | null;
+      const videoEl = document.querySelector("video");
+      if (!sceneEl || !videoEl) {
+        console.error("Required elements not found");
+        return;
+      }
+
+      const renderer = sceneEl.renderer;
+      const camera = sceneEl.camera;
+      if (renderer && camera) {
+        renderer.render(sceneEl.object3D, camera);
+      }
+
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return;
+
+      const width = videoEl.videoWidth;
+      const height = videoEl.videoHeight;
+      canvas.width = width;
+      canvas.height = height;
+
+      ctx.drawImage(videoEl, 0, 0, width, height);
+
+      const threeCanvas = sceneEl.canvas;
+      if (threeCanvas) {
+        ctx.drawImage(threeCanvas, 0, 0, width, height);
+      }
+
+      const dataUrl = canvas.toDataURL("image/png", 1.0);
+      const link = document.createElement("a");
+      const timestamp = new Date()
+        .toISOString()
+        .replace(/[:.]/g, "-")
+        .slice(0, 19);
+      link.download = `Specimen_${name}_${timestamp}.png`;
+      link.href = dataUrl;
+
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (e) {
+      console.error("Capture failed", e);
+      alert("写真の保存に失敗しました。カメラの権限等を確認してください。");
+    } finally {
+      setTimeout(() => setIsCapturing(false), 800);
     }
   };
 
@@ -207,7 +218,7 @@ export default function ReleasePage() {
         </div>
       )}
 
-      {status !== "started" && (
+      {status === "loading" && (
         <div
           style={{
             position: "absolute",
@@ -218,44 +229,21 @@ export default function ReleasePage() {
             alignItems: "center",
             justifyContent: "center",
             background: "#fff",
-            color: "#000",
+            color: "#3e2f28",
           }}
         >
-          <div
-            style={{
-              fontSize: "80px",
-              marginBottom: "20px",
-              animation: "float 3s ease-in-out infinite",
-            }}
-          >
-            🦋
-          </div>
+          <div className="spinner"></div>
           <h1
             style={{
-              fontSize: "18px",
+              fontSize: "10px",
               fontWeight: "900",
-              marginBottom: "40px",
-              letterSpacing: "0.2em",
+              marginTop: "20px",
+              letterSpacing: "0.4em",
+              opacity: 0.5,
             }}
           >
-            READY TO RELEASE
+            SYNCING VISION
           </h1>
-          <button
-            onClick={startAR}
-            style={{
-              padding: "20px 60px",
-              fontSize: "14px",
-              fontWeight: "900",
-              backgroundColor: "#3b82f6",
-              color: "#fff",
-              border: "none",
-              borderRadius: "100px",
-              cursor: "pointer",
-              boxShadow: "0 10px 30px rgba(59, 130, 246, 0.4)",
-            }}
-          >
-            {status === "loading" ? "INITIALIZING..." : "空間に解き放つ"}
-          </button>
         </div>
       )}
 
@@ -270,7 +258,6 @@ export default function ReleasePage() {
         }}
       />
 
-      {/* 写真撮影UI */}
       {status === "started" && !isExiting && (
         <>
           <div
@@ -352,7 +339,6 @@ export default function ReleasePage() {
         </>
       )}
 
-      {/* 撮影時のフラッシュ演出 */}
       {isCapturing && (
         <div
           style={{
@@ -370,37 +356,29 @@ export default function ReleasePage() {
           __html: `
         @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-20px); } }
         @keyframes flash { from { opacity: 1; } to { opacity: 0; } }
-        .spinner { width: 30px; height: 30px; border: 3px solid #eee; border-top-color: #3b82f6; border-radius: 50%; animation: spin 0.8s linear infinite; }
+        .spinner { width: 30px; height: 30px; border: 1px solid #eee; border-top: 1px solid #3e2f28; border-radius: 50%; animation: spin 0.8s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
       `,
         }}
       />
 
-      <button
+      <CloseButton
         onClick={() => {
           setIsExiting(true);
           cleanupAR();
-          setTimeout(() => (window.location.href = "/"), 300);
+          setTimeout(() => {
+            router.back(); // 1つ前に戻る（スクロール位置を維持）
+          }, 300);
         }}
-        style={{
-          position: "absolute",
-          top: "20px",
-          right: "20px",
-          zIndex: 3000,
-          width: "44px",
-          height: "44px",
-          borderRadius: "15px",
-          backgroundColor: "rgba(255,255,255,0.8)",
-          backdropFilter: "blur(10px)",
-          color: "#000",
-          border: "none",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-        }}
-      >
-        ✕
-      </button>
+      />
     </div>
+  );
+}
+
+export default function ReleasePage() {
+  return (
+    <Suspense fallback={null}>
+      <ReleaseContent />
+    </Suspense>
   );
 }

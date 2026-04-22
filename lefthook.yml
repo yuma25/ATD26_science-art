@@ -4,6 +4,11 @@ pre-commit:
     linter:
       glob: "*.{js,ts,tsx,go,json,md}"
       run: pnpm run lint
+    build-check:
+      glob: "*.{ts,tsx}"
+      run: pnpm run build
+    test-check:
+      run: pnpm run test
     formatter:
       glob: "*.{js,ts,tsx,json,md}"
       run: pnpm dlx prettier --write {staged_files} && git add {staged_files}

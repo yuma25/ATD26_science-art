@@ -2,47 +2,54 @@ import { createClient } from "@supabase/supabase-js";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
 
-// 永続化（localStorage）を明示的に有効にする設定
-export const supabase =
-  supabaseUrl && supabaseAnonKey
-    ? createClient(supabaseUrl, supabaseAnonKey, {
-        auth: {
-          persistSession: true,
-          autoRefreshToken: true,
-          detectSessionInUrl: true,
-        },
-      })
-    : null;
+// 1. 一般権限（ブラウザ用）
+export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
+// 2. 管理者権限 (サーバーサイド専用)
+export const supabaseAdmin = supabaseServiceKey
+  ? createClient(supabaseUrl, supabaseServiceKey, {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false,
+      },
+    })
+  : null;
 
 /**
- * 既存のセッションを確認し、なければ匿名ログインを実行します。
- * これによりリロードしてもIDが変わりません。
+ * ログイン状態を確認し、プロフィールを同期する
  */
 export const signInAnonymously = async () => {
-  if (!supabase) return null;
-
   try {
-    // 1. まず現在のセッション（既存ユーザー）を確認
     const {
-      data: { session },
-    } = await supabase.auth.getSession();
-    if (session?.user) {
-      console.log("Existing session found:", session.user.id);
-      return session.user;
+      data: { user },
+    } = await supabase.auth.getUser();
+    let currentUser = user;
+
+    if (!currentUser) {
+      console.log("Starting new anonymous session...");
+      const { data, error } = await supabase.auth.signInAnonymously();
+      if (error) throw error;
+      currentUser = data.user;
     }
 
-    // 2. セッションがなければ匿名ログインを実行
-    const { data, error } = await supabase.auth.signInAnonymously();
-    if (error) {
-      console.warn("Anonymous Sign-in disabled or failed:", error.message);
-      return null;
+    if (currentUser) {
+      // 💡 ブラウザから直接DBに書かず、APIルートを通じて同期する (RLS回避)
+      try {
+        await fetch("/api/profile/sync", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ userId: currentUser.id }),
+        });
+        console.log("✅ Identity sync request sent.");
+      } catch {
+        console.warn("⚠️ Identity sync call failed, but user session exists.");
+      }
     }
-
-    console.log("New anonymous session created:", data.user?.id);
-    return data.user;
+    return currentUser;
   } catch (error) {
-    console.error("Auth Error:", error);
+    console.error("❌ Auth failure:", error);
     return null;
   }
 };

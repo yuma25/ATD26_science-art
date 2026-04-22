@@ -1,11 +1,35 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import React, { useEffect, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Script from "next/script";
-import { ChevronLeft, Move } from "lucide-react";
+import { Move } from "lucide-react";
+import { CloseButton } from "../../components/layout/CloseButton";
 
-export default function ModelViewerPage() {
+/**
+ * model-viewer のためのプロパティ定義
+ */
+interface ModelViewerProps extends React.HTMLAttributes<HTMLElement> {
+  src?: string;
+  ar?: boolean;
+  "ar-modes"?: string;
+  "camera-controls"?: boolean;
+  "auto-rotate"?: boolean;
+  "shadow-intensity"?: string;
+  "environment-image"?: string;
+  exposure?: string;
+  poster?: string;
+}
+
+/**
+ * 型安全な model-viewer コンポーネント
+ * React.createElement を使用することで JSX のパースエラーを確実に回避します
+ */
+const ModelViewer = (props: ModelViewerProps) => {
+  return React.createElement("model-viewer", props);
+};
+
+function ModelViewerContent() {
   const searchParams = useSearchParams();
   const modelUrl = searchParams.get("model") || "/butterfly.glb";
   const name = searchParams.get("name") || "標本";
@@ -46,45 +70,27 @@ export default function ModelViewerPage() {
           padding: "20px",
           display: "flex",
           alignItems: "center",
-          justifyContent: "space-between",
+          justifyContent: "center",
         }}
       >
-        <button
-          onClick={() => (window.location.href = "/")}
+        <h1
           style={{
-            width: "44px",
-            height: "44px",
-            borderRadius: "15px",
-            backgroundColor: "rgba(255,255,255,0.8)",
-            border: "none",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            backdropFilter: "blur(10px)",
-            boxShadow: "0 4px 12px rgba(0,0,0,0.05)",
+            margin: 0,
+            fontSize: "14px",
+            fontWeight: "900",
+            textTransform: "uppercase",
+            letterSpacing: "0.1em",
+            color: "#3e2f28",
           }}
         >
-          <ChevronLeft size={24} />
-        </button>
-        <div style={{ flex: 1, textAlign: "center" }}>
-          <h1
-            style={{
-              margin: 0,
-              fontSize: "14px",
-              fontWeight: "900",
-              textTransform: "uppercase",
-              letterSpacing: "0.1em",
-            }}
-          >
-            {name}
-          </h1>
-        </div>
-        <div style={{ width: "44px" }} />
+          {name}
+        </h1>
       </div>
 
+      <CloseButton />
+
       {/* メイン 3D/AR ビューワー */}
-      {/* @ts-expect-error - カスタム要素 */}
-      <model-viewer
+      <ModelViewer
         src={modelUrl}
         ar
         ar-modes="webxr scene-viewer quick-look"
@@ -135,7 +141,7 @@ export default function ModelViewerPage() {
         >
           INITIALIZING 3D SPECIMEN...
         </div>
-      </model-viewer>
+      </ModelViewer>
 
       {/* 操作ガイド */}
       <div
@@ -164,5 +170,13 @@ export default function ModelViewerPage() {
         </p>
       </div>
     </div>
+  );
+}
+
+export default function ModelViewerPage() {
+  return (
+    <Suspense fallback={null}>
+      <ModelViewerContent />
+    </Suspense>
   );
 }
