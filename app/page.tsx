@@ -14,6 +14,7 @@ import {
 import { useHome } from "../hooks/useHome";
 import { BadgeCard } from "../components/BadgeCard";
 import { calculateProgress } from "../backend/lib/logic";
+import { useScrollManager } from "../hooks/useScrollManager";
 
 export default function Home() {
   const {
@@ -25,12 +26,24 @@ export default function Home() {
     requestCameraPermission,
   } = useHome();
 
+  const { saveScroll, restoreScroll } = useScrollManager();
+
   const [showFinalLog, setShowFinalLog] = useState(false);
   const [completionTime, setCompletionTime] = useState("");
 
   const acquiredCount = badges.filter((b) => isAcquired(b.id)).length;
   const isComplete = badges.length > 0 && acquiredCount === badges.length;
   const progressPercentage = calculateProgress(badges.length, acquiredCount);
+
+  // 💡 修正：データロード完了時にスクロール位置を復元
+  useEffect(() => {
+    if (!syncing && badges.length > 0) {
+      const timer = setTimeout(() => {
+        restoreScroll();
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [syncing, badges, restoreScroll]);
 
   // コンプリート時に一度だけ時刻を記録
   useEffect(() => {
@@ -53,6 +66,7 @@ export default function Home() {
       const ok = await requestCameraPermission();
       if (!ok) return;
     }
+    saveScroll();
     window.location.href = "/ar";
   };
 
@@ -144,13 +158,13 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Vertical Roadmap */}
           <div className="space-y-60 relative z-20">
             {badges.map((badge) => (
               <BadgeCard
                 key={badge.id}
                 badge={badge}
                 isAcquired={isAcquired(badge.id)}
+                onSaveScroll={saveScroll}
               />
             ))}
           </div>
