@@ -1,0 +1,1 @@
+feat: RELEASEモード（PHOTO MODE）での個別スケーリング導入と表示の最適化

@@ -157,10 +157,20 @@ function ReleaseContent() {
 
   useEffect(() => {
     if (status === "started" && arContainerRef.current) {
+      // 💡 モデルごとに個別スケールを適用 (AR 画面と同じ設定)
+      let scaleValue = 0.1;
+      if (name === "Leviathan") scaleValue = 0.01;
+      else if (name === "Moon Jelly") scaleValue = 0.015;
+      else if (name === "Antique Sword") scaleValue = 0.005;
+      else if (name === "Great Wave") scaleValue = 0.03;
+      else if (name === "Common Blue") scaleValue = 1.0;
+
+      const s = `${scaleValue} ${scaleValue} ${scaleValue}`;
+
       arContainerRef.current.innerHTML = `
         <a-scene 
           embedded 
-          renderer="colorManagement: true, physicallyCorrectLights: true, exposure: 1.5, alpha: true, preserveDrawingBuffer: true"
+          renderer="colorManagement: true, physicallyCorrectLights: false, exposure: 1.2, alpha: true, preserveDrawingBuffer: true, antialias: true"
           vr-mode-ui="enabled: false"
           device-orientation-permission-ui="enabled: false"
           loading-screen="enabled: false"
@@ -172,10 +182,10 @@ function ReleaseContent() {
           <a-light type="directional" intensity="2.0" position="1 2 1"></a-light>
           
           <a-entity position="0 1.6 -2">
-            <a-entity animation="property: rotation; to: 0 360 0; dur: 20000; easing: linear; loop: true">
-              <a-entity position="1.5 0 0" animation="property: position; to: 1.5 0.5 0.2; dur: 4000; easing: easeInOutSine; dir: alternate; loop: true">
-                <a-entity animation="property: rotation; from: -10 90 -10; to: 10 90 10; dur: 5000; easing: easeInOutSine; dir: alternate; loop: true">
-                  <a-gltf-model src="#m" scale="3 3 3" animation-mixer="clip: *; loop: repeat; timeScale: 1.2"></a-gltf-model>
+            <a-entity animation="property: rotation; to: 0 360 0; dur: 30000; easing: linear; loop: true">
+              <a-entity position="1.2 0 0" animation="property: position; to: 1.2 0.4 0.1; dur: 6000; easing: easeInOutSine; dir: alternate; loop: true">
+                <a-entity animation="property: rotation; from: -10 90 -10; to: 10 90 10; dur: 8000; easing: easeInOutSine; dir: alternate; loop: true">
+                  <a-gltf-model src="#m" scale="${s}" animation-mixer="clip: *; loop: repeat; timeScale: 1.0"></a-gltf-model>
                 </a-entity>
               </a-entity>
             </a-entity>
@@ -184,7 +194,7 @@ function ReleaseContent() {
       `;
       setupCameraBackground();
     }
-  }, [status, modelUrl]);
+  }, [status, modelUrl, name]);
 
   if (!mounted) return null;
 
@@ -228,7 +238,7 @@ function ReleaseContent() {
             flexDirection: "column",
             alignItems: "center",
             justifyContent: "center",
-            background: "#fff",
+            background: "#fdfaf2",
             color: "#3e2f28",
           }}
         >
@@ -367,7 +377,7 @@ function ReleaseContent() {
           setIsExiting(true);
           cleanupAR();
           setTimeout(() => {
-            router.back(); // 1つ前に戻る（スクロール位置を維持）
+            router.back();
           }, 300);
         }}
       />
