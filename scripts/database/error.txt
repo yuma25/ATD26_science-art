@@ -1,0 +1,9 @@
+forward-logs-shared.ts:95 Download the React DevTools for a better development experience: https://react.dev/link/react-devtools
+forward-logs-shared.ts:95 [HMR] connected
+fetch.ts:7  GET https://igqtslzpsnvwtkvqnsyg.supabase.co/rest/v1/profiles?select=*&id=eq.68f5ed14-9263-4dc9-9737-f3a55dfa94ee 406 (Not Acceptable)
+(anonymous) @ fetch.ts:7
+(anonymous) @ fetch.ts:34
+await in (anonymous)
+(anonymous) @ PostgrestBuilder.ts:316
+then @ PostgrestBuilder.ts:364
+useHome.ts:38 [useHome] Profile from DB: null

@@ -87,6 +87,7 @@ export const useAR = () => {
       acquiredBadgeIdsRef.current.push(badgeId);
     }
 
+    if (!supabase) return;
     const {
       data: { user },
     } = await supabase.auth.getUser();

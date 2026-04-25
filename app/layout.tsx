@@ -4,6 +4,11 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "ATD26_SCIENCE-ART",
   description: "Journal of AR & 3D Specimens",
+  appleWebApp: {
+    capable: true,
+    title: "ATD26",
+    statusBarStyle: "default",
+  },
 };
 
 export const viewport: Viewport = {
@@ -21,9 +26,6 @@ export default function RootLayout({
 }) {
   return (
     <html lang="ja">
-      <head>
-        <meta name="apple-mobile-web-app-capable" content="yes" />
-      </head>
       <body className="antialiased">{children}</body>
     </html>
   );

@@ -10,31 +10,22 @@ export const useHome = () => {
   const [acquiredBadgeIds, setAcquiredBadgeIds] = useState<string[]>([]);
   const [syncing, setSyncing] = useState(false);
   const [fullUserId, setFullUserId] = useState<string>("");
+
+  // undefined: ロード中, null: 未設定, number: 設定済み
+  const [partySize, setPartySize] = useState<number | null | undefined>(
+    undefined,
+  );
+
   const [cameraPermission, setCameraPermission] = useState<
     "prompt" | "granted" | "denied"
   >("prompt");
-
   const isLoadingRef = useRef(false);
 
-  const requestCameraPermission = useCallback(async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-      stream.getTracks().forEach((track) => track.stop());
-      setCameraPermission("granted");
-      return true;
-    } catch (err) {
-      console.warn("Camera permission denied or failed:", err);
-      setCameraPermission("denied");
-      return false;
-    }
-  }, []);
-
   /**
-   * 初期データのロードと獲得順ソート（昇順：古い順）
+   * 初期データのロード
    */
   const loadData = useCallback(async () => {
     if (isLoadingRef.current) return;
-
     isLoadingRef.current = true;
     setSyncing(true);
 
@@ -42,10 +33,20 @@ export const useHome = () => {
       const user = await signInAnonymously();
       if (user) {
         setFullUserId(user.id);
-        const [allBadges, acquiredRows] = await Promise.all([
+        const [allBadges, acquiredRows, profile] = await Promise.all([
           BadgeService.getAllBadges(),
           BadgeService.getAcquiredBadges(user.id),
+          BadgeService.getProfile(user.id),
         ]);
+
+        console.log(`[useHome] Profile from DB:`, profile);
+
+        // party_size の判定（数値が設定されていればそれを使い、なければ null で入力を促す）
+        if (profile && typeof profile.party_size === "number") {
+          setPartySize(profile.party_size);
+        } else {
+          setPartySize(null);
+        }
 
         const myAcquiredIds = acquiredRows.map((r) => r.badge_id);
         setAcquiredBadgeIds(myAcquiredIds);
@@ -53,23 +54,14 @@ export const useHome = () => {
         const acquisitionMap = new Map(
           acquiredRows.map((r) => [r.badge_id, r.acquired_at]),
         );
-
-        // 💡 修正：獲得順に並び替え（昇順：古い発見が上、新しい発見が下へ蓄積）
         const sortedBadges = [...allBadges].sort((a, b) => {
-          const timeA = acquisitionMap.get(a.id);
-          const timeB = acquisitionMap.get(b.id);
-
-          if (timeA && timeB) {
-            // 両方獲得済み：日時の昇順（古い発見が上、物語の始まり）
-            return new Date(timeA).getTime() - new Date(timeB).getTime();
-          }
-          if (timeA) return -1; // 発見済みは上に
-          if (timeB) return 1; // 発見済みは上に
-
-          // 両方未発見：本来のインデックス順
+          const tA = acquisitionMap.get(a.id);
+          const tB = acquisitionMap.get(b.id);
+          if (tA && tB) return new Date(tA).getTime() - new Date(tB).getTime();
+          if (tA) return -1;
+          if (tB) return 1;
           return a.target_index - b.target_index;
         });
-
         setBadges(sortedBadges);
       }
     } catch (error) {
@@ -80,20 +72,24 @@ export const useHome = () => {
     }
   }, []);
 
+  const updatePartySize = async (size: number) => {
+    if (!fullUserId) return;
+    setPartySize(size);
+    const ok = await BadgeService.updateProfile(fullUserId, {
+      party_size: size,
+    });
+    if (ok) {
+      // 💡 確実に保存されたことを確認するため再ロード
+      await loadData();
+    }
+    return ok;
+  };
+
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     loadData();
-
     window.addEventListener("focus", loadData);
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === "visible") loadData();
-    };
-    document.addEventListener("visibilitychange", handleVisibilityChange);
-
-    return () => {
-      window.removeEventListener("focus", loadData);
-      document.removeEventListener("visibilitychange", handleVisibilityChange);
-    };
+    return () => window.removeEventListener("focus", loadData);
   }, [loadData]);
 
   useEffect(() => {
@@ -104,13 +100,12 @@ export const useHome = () => {
             name: "camera" as PermissionName,
           });
           setCameraPermission(result.state as "prompt" | "granted" | "denied");
-          result.onchange = () => {
+          result.onchange = () =>
             setCameraPermission(
               result.state as "prompt" | "granted" | "denied",
             );
-          };
         } catch (e) {
-          console.warn("Permissions API not supported for camera", e);
+          console.warn("Permissions API not supported", e);
         }
       }
     };
@@ -124,9 +119,24 @@ export const useHome = () => {
     acquiredBadgeIds,
     syncing,
     fullUserId,
+    partySize,
+    showPartyInput: partySize === null,
     cameraPermission,
     isAcquired,
-    requestCameraPermission,
+    requestCameraPermission: async () => {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: true,
+        });
+        stream.getTracks().forEach((t) => t.stop());
+        setCameraPermission("granted");
+        return true;
+      } catch {
+        setCameraPermission("denied");
+        return false;
+      }
+    },
+    updatePartySize,
     refresh: loadData,
   };
 };
