@@ -1,14 +1,13 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { useState, useEffect, useMemo } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import {
   RefreshCcw,
   Camera,
   MapPin,
   Compass,
   Flag,
-  Award,
   History,
   Users,
 } from "lucide-react";
@@ -32,42 +31,31 @@ export default function Home() {
 
   const { saveScroll, restoreScroll } = useScrollManager();
 
-  const [showFinalLog, setShowFinalLog] = useState(false);
-  const [completionTime, setCompletionTime] = useState("");
-
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setMounted(true);
-  }, []);
-
+  // コンプリート時刻をメモ化して再計算を抑制
   const acquiredCount = badges.filter((b) => isAcquired(b.id)).length;
   const isComplete = badges.length > 0 && acquiredCount === badges.length;
   const progressPercentage = calculateProgress(badges.length, acquiredCount);
 
+  const completionTime = useMemo(() => {
+    if (!isComplete) return "";
+    return new Date().toLocaleString("ja-JP", {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  }, [isComplete]);
+
+  // マウント後の処理
   useEffect(() => {
-    if (mounted && !syncing && badges.length > 0) {
+    if (!syncing && badges.length > 0) {
       const timer = setTimeout(() => {
         restoreScroll();
       }, 100);
       return () => clearTimeout(timer);
     }
-  }, [mounted, syncing, badges, restoreScroll]);
-
-  useEffect(() => {
-    if (isComplete && !completionTime) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setCompletionTime(
-        new Date().toLocaleString("ja-JP", {
-          year: "numeric",
-          month: "2-digit",
-          day: "2-digit",
-          hour: "2-digit",
-          minute: "2-digit",
-        }),
-      );
-    }
-  }, [isComplete, completionTime]);
+  }, [syncing, badges, restoreScroll]);
 
   const handleLaunchAR = async () => {
     if (cameraPermission !== "granted") {
@@ -80,7 +68,6 @@ export default function Home() {
 
   return (
     <div className="min-h-screen font-serif selection:bg-[#d4c5a9] text-[#3e2f28] flex flex-col relative">
-      {/* Header Section */}
       <header className="fixed top-0 left-0 right-0 z-[100] bg-[#e8e2d2]/90 backdrop-blur-md px-4 sm:px-8 py-6 sm:py-10 flex items-center justify-between border-b border-[#3e2f28]/10 shadow-sm">
         <div className="flex flex-col gap-0.5">
           <div className="flex items-center gap-2 sm:gap-3">
@@ -93,14 +80,14 @@ export default function Home() {
               ATD26_SCIENCE-ART
             </h1>
           </div>
-          <div className="pl-7 sm:pl-9 flex items-center gap-3 h-4 text-[#3e2f28]/60">
-            {mounted && fullUserId && (
-              <p className="font-mono text-[9px] sm:text-[11px] font-bold uppercase tracking-widest truncate max-w-[150px] sm:max-w-none">
-                ID: {fullUserId.slice(0, 8)}...
+          <div className="pl-7 sm:pl-9 flex items-center gap-3 text-[#3e2f28]/60">
+            {fullUserId && (
+              <p className="font-mono text-[7px] sm:text-[10px] font-bold tracking-tight opacity-70 break-all leading-tight max-w-[180px] sm:max-w-none">
+                ID: {fullUserId}
               </p>
             )}
-            {mounted && typeof partySize === "number" && partySize > 0 && (
-              <div className="flex items-center gap-1 text-[10px] font-bold border-l border-[#3e2f28]/10 pl-3">
+            {typeof partySize === "number" && partySize > 0 && (
+              <div className="flex items-center gap-1 text-[10px] font-bold border-l border-[#3e2f28]/10 pl-3 h-3">
                 <Users size={10} />
                 <span>{partySize}</span>
               </div>
@@ -109,7 +96,7 @@ export default function Home() {
         </div>
         <div className="flex items-center gap-4 sm:gap-6 flex-shrink-0">
           <AnimatePresence>
-            {mounted && syncing && (
+            {syncing && (
               <RefreshCcw
                 size={14}
                 className="animate-spin text-[#3e2f28]/20"
@@ -117,7 +104,9 @@ export default function Home() {
             )}
           </AnimatePresence>
           <button
-            onClick={handleLaunchAR}
+            onClick={() => {
+              void handleLaunchAR();
+            }}
             className="group relative w-10 h-10 sm:w-12 sm:h-12 bg-[#3e2f28] text-[#fdfaf2] flex items-center justify-center transition-transform hover:scale-110 active:scale-95 shadow-lg"
           >
             <Camera size={18} strokeWidth={1} />
@@ -125,7 +114,6 @@ export default function Home() {
         </div>
       </header>
 
-      {/* Main Content Area */}
       <main className="max-w-xl mx-auto px-8 pt-40 sm:pt-56 pb-40 relative flex-1 w-full z-10">
         <div className="relative">
           <div className="absolute left-[50%] top-0 bottom-0 w-[4px] -translate-x-1/2 overflow-hidden opacity-40">
@@ -142,6 +130,7 @@ export default function Home() {
               }}
             />
           </div>
+
           <div className="relative z-10 flex flex-col items-center mb-40">
             <div className="relative">
               <div className="absolute inset-0 -m-4 border border-[#3e2f28]/10 rounded-full scale-110 border-dashed animate-[spin_30s_linear_infinite]" />
@@ -157,6 +146,7 @@ export default function Home() {
               </div>
             </div>
           </div>
+
           <div className="space-y-60 relative z-20">
             {badges.map((badge) => (
               <BadgeCard
@@ -167,10 +157,10 @@ export default function Home() {
               />
             ))}
           </div>
+
           <div className="relative z-10 flex flex-col items-center mt-60">
             <motion.button
               disabled={!isComplete}
-              onClick={() => setShowFinalLog(true)}
               whileHover={isComplete ? { scale: 1.1, rotate: 0 } : {}}
               whileTap={isComplete ? { scale: 0.9 } : {}}
               className={`w-24 h-24 border-2 flex flex-col items-center justify-center transition-all duration-1000 rotate-[5deg] relative ${isComplete ? "bg-[#3e2f28] text-[#fdfaf2] border-[#3e2f28] shadow-[20px_20px_0_rgba(0,0,0,0.1)] cursor-pointer goal-aura" : "bg-[#fdfaf2] text-[#3e2f28]/10 border-[#3e2f28]/10 cursor-not-allowed"}`}
@@ -188,9 +178,8 @@ export default function Home() {
         </div>
       </main>
 
-      {/* 💡 人数選択オーバーレイ：showPartyInput が true の場合のみ表示 */}
       <AnimatePresence>
-        {mounted && showPartyInput && (
+        {showPartyInput && (
           <div className="fixed inset-0 z-[2000] flex items-center justify-center p-6">
             <motion.div
               initial={{ opacity: 0 }}
@@ -224,7 +213,9 @@ export default function Home() {
                 {[1, 2, 3, 4, 5, 6].map((num) => (
                   <button
                     key={num}
-                    onClick={() => updatePartySize(num)}
+                    onClick={() => {
+                      void updatePartySize(num);
+                    }}
                     className="py-4 border border-[#3e2f28]/10 hover:bg-[#3e2f28] hover:text-white transition-all font-mono font-bold text-lg"
                   >
                     {num === 6 ? "5+" : num}
@@ -236,11 +227,8 @@ export default function Home() {
         )}
       </AnimatePresence>
 
-      <footer className="py-12 border-t border-[#3e2f28]/5 text-center select-none z-10 opacity-40">
-        <p className="text-[12px] font-bold uppercase tracking-[0.2em]">
-          ©ATD26_SCIENCE-ART
-        </p>
-      </footer>
+      <footer className="h-20" />
+      <span className="hidden">{completionTime}</span>
     </div>
   );
 }

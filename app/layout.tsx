@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
+import { AppFooter } from "@/components/layout/AppFooter";
 
 export const metadata: Metadata = {
   title: "ATD26_SCIENCE-ART",
@@ -26,7 +27,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="ja">
-      <body className="antialiased">{children}</body>
+      <body className="antialiased">
+        {children}
+        <AppFooter />
+      </body>
     </html>
   );
 }

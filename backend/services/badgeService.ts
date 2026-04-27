@@ -1,6 +1,5 @@
 import { supabase, supabaseAdmin } from "../lib/supabase";
 import { Badge, BadgeSchema, UserBadge } from "../types";
-import { Logger } from "../../server/lib/logger";
 
 export const BadgeService = {
   /**
