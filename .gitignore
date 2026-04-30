@@ -146,3 +146,5 @@ scripts/database/
 AR_dataset/**/*
 !AR_dataset/**/*.jpg
 !AR_dataset/**/*.JPG
+!AR_dataset/**/*.png
+!AR_dataset/**/*.PNG
