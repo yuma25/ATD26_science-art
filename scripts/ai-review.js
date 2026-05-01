@@ -1,5 +1,5 @@
 /**
- * 【第1章】モジュールのインポート
+ * モジュールのインポート
  * ファイル操作、パス操作、そしてGoogle Gemini APIを操作するためのライブラリを読み込みます。
  */
 /* eslint-disable @typescript-eslint/no-require-imports */
@@ -9,7 +9,7 @@ const path = require("path");
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 
 /**
- * 【第2章】AIレビューの実行メイン関数
+ * AIレビューの実行メイン関数
  * GitHub Actions などの CI 環境で動作し、
  * 送信されたコードの差分（diff）をAIが分析してコメントを生成します。
  */

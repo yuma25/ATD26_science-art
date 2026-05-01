@@ -1,103 +1,92 @@
-# 📖 Adventurer's Field Journal
+# ATD26_science-art
 
-### — ATD26_SCIENCE-ART —
-
-> **「失われた標本たちを、君の瞳で呼び覚ませ。」**
->
-> 実世界の絵画に隠された幻想的な3D標本をスキャンし、自分だけのフィールドジャーナルを完成させるAR絵画探索・標本収集アプリケーション。
+AR（拡張現実）技術を用いた標本収集・管理アプリケーション。実世界の画像認識を通じて3Dモデルを取得し、ユーザーごとの取得履歴を永続化します。
 
 ---
 
-## 🌟 エクスペリエンス (The Experience)
+## 🛠 技術スタック
 
-実世界の絵画（ターゲット）をスマートフォンでスキャンすることで、3D標本が目の前に現れます。全ての標本は時系列順にジャーナル（ホーム画面）へ記録され、全てを揃えることで「最終日誌」への道が開かれます。
+### Frontend / Core
+
+- **Framework**: Next.js 16 (App Router)
+- **Language**: TypeScript
+- **Styling**: Tailwind CSS v4, Framer Motion
+- **AR Engine**: MindAR.js (Web-based Image Tracking), A-Frame
+
+### Backend / Infrastructure
+
+- **BaaS**: Supabase (PostgreSQL / Auth / Storage)
+- **Data Validation**: Zod
+- **Data Fetching**: SWR (Stale-While-Revalidate)
+
+### Development / Quality
+
+- **Linter/Formatter**: ESLint, Prettier
+- **Testing**: Vitest
+- **Commit**: Commitlint, Lefthook
 
 ---
 
-## 🏗 システム構成図 (Architecture Diagram)
+## 📖 開発ドキュメント
 
-プロジェクト全体のデータの流れと構造を可視化しています。
+詳細なシステム設計については、以下の各仕様書を参照してください。
 
-```mermaid
-graph LR
-    %% フロントエンド層
-    subgraph UI ["📱 ユーザーインターフェース (app/)"]
-        direction TB
-        Home["🏠 <b>ホーム画面</b><br/><small>app/(main)/page.tsx</small>"]
-        AR["📷 <b>AR体験画面</b><br/><small>app/ar/page.tsx</small>"]
-        Admin["📊 <b>管理者パネル</b><br/><small>app/(main)/admin/page.tsx</small>"]
-        API["🌐 <b>APIルート</b><br/><small>app/api/*</small>"]
-    end
+- [🏛️ アーキテクチャ設計書](./docs/ARCHITECTURE.md)
+  - システム構成、レイヤー責務、技術的選定根拠
+- [🔌 API・サービス仕様書](./docs/API.md)
+  - エンドポイント定義、レスポンス形式、エラーハンドリング、冪等性設計
+- [🗄️ データベース設計書](./docs/DATABASE.md)
+  - テーブル定義、リレーション、インデックス戦略、整合性制約
 
-    %% ロジック層
-    subgraph Logic ["⚙️ ロジック & 処理 (backend/)"]
-        direction TB
-        Hooks["🔧 <b>カスタムフック</b><br/><small>hooks/*</small>"]
-        Service["📋 <b>サービス層</b><br/><small>badgeService.ts</small>"]
-        Client["🔑 <b>Supabase接続</b><br/><small>supabase.ts</small>"]
-    end
+---
 
-    %% データベース層
-    subgraph Data ["☁️ クラウド基盤"]
-        DB[("🗄️ <b>Supabase DB</b><br/><small>PostgreSQL / Auth</small>")]
-    end
+## 📂 プロジェクト構成 (Monorepo)
 
-    %% 接続（データの流れ）
-    Home --> Hooks
-    AR --> Hooks
-    Admin --> API
-    Hooks --> Service
-    API --> Service
-    Service --> Client
-    Client -.-> DB
+本プロジェクトは `pnpm workspaces` を用いたモノレポ構成を採用しており、フロントエンドとバックエンドの責務を物理的に分離しています。
 
-    %% スタイル設定
-    style UI fill:#eef6ff,stroke:#4c9aff,stroke-width:2px
-    style Logic fill:#f8f0ff,stroke:#be4bdb,stroke-width:2px
-    style Data fill:#fff5f5,stroke:#fa5252,stroke-width:2px
+```text
+.
+├── backend/         # @app/backend パッケージ (ビジネスロジック、型定義、共通ライブラリ)
+├── frontend/        # Next.js プロジェクト (UIページ、APIルート)
+├── docs/            # 設計仕様書 (ARCHITECTURE, API, DATABASE)
+├── AR_dataset/      # AR素材のマスターデータ
+├── scripts/         # 開発支援スクリプト
+└── pnpm-workspace.yaml
 ```
 
-> [!TIP]
-> より詳細でリッチなアイコン版の図面は [docs/ARCHITECTURE_DIAGRAM.drawio](./docs/ARCHITECTURE_DIAGRAM.drawio) で閲覧・編集可能です。
+---
+
+## 🚀 セットアップ
+
+### 1. 依存関係のインストール
+
+プロジェクトルートで実行してください。ワークスペース全体の依存関係がインストールされます。
+
+```bash
+pnpm install
+```
+
+### 2. 環境変数の設定
+
+`frontend/` ディレクトリ内に `.env.local` を作成してください。
+
+```bash
+cp .env.local.example frontend/.env.local
+```
+
+### 3. 開発サーバーの起動
+
+```bash
+pnpm --filter frontend dev
+```
 
 ---
 
-## 📂 構成と役割 (Structure & Files)
+## ✅ 開発ガイドライン
 
-### 🖼️ 画面・インターフェース (`app/`)
-
-- `page.tsx`: **ホーム画面 (Journal Roadmap)**。標本の獲得状況を時系列で表示。
-- **`ar/page.tsx`**: **AR探索画面**。MindARエンジンによる画像認識。
-- **`release/page.tsx`**: **フォトモード**。獲得した標本を現実世界で撮影。
-- **`api/`**: サーバーサイド実行による安全なデータ通信窓口。
-
-### 🧠 知能・心臓部 (`backend/`)
-
-- **`services/badgeService.ts`**: **データ統合レイヤー**。APIとDB操作を抽象化。
-- **`lib/constants.ts`**: **標本の定義**。サイズ、動き、アニメーションを制御。
-- **`lib/supabase.ts`**: データベースへの接続と匿名認証。
-
-### 🧩 UI部品・ロジック (`components/`, `hooks/`)
-
-- `BadgeCard.tsx`: ジャーナルに並ぶ「標本箱」のコンポーネント。
-- `useAR.ts`: **ARライフサイクル**。認識、解析ゲージ、状態管理を一括制御。
-
----
-
-## 🛠 技術スタック (Tech Stack)
-
-- **Frontend**: `Next.js 16`, `React 19`, `Framer Motion`, `Tailwind CSS v4`
-- **AR/3D**: `MindAR (Image Tracking)`, `A-Frame`, `THREE.js`
-- **Backend**: `Supabase (PostgreSQL / Auth)`
-- **Quality**: `TypeScript`, `Zod`, `Vitest`, `ESLint`
-
----
-
-## 🚀 クイックスタート
-
-1. **セットアップ**: `pnpm install`
-2. **開発開始**: `pnpm dev`
-3. **ビルド**: `pnpm run build`
+- **ビルド確認**: コミット前に必ず `pnpm run build` が通ることを確認してください。
+- **型安全性**: `any` の使用を避け、`backend/types` で定義されたスキーマを優先してください。
+- **コミットメッセージ**: Conventional Commits に準拠してください。
 
 ---
 
