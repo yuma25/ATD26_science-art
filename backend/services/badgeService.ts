@@ -1,34 +1,42 @@
 import { supabase, supabaseAdmin } from "../lib/supabase";
-import { Badge, BadgeSchema, UserBadge } from "../types";
+import { Badge, BadgeSchema, UserBadge, UserBadgeSchema } from "../types";
 
 /**
  * 【標本（バッジ）サービス】
  * データベース（Supabase）とのデータのやり取りを管理する中心的なクラスです。
+ * 実行環境（ブラウザ/サーバー）を判別し、最適な通信経路を自動選択します。
  */
 export const BadgeService = {
   /**
-   * --- 【第1章：標本情報の取得】 ---
-   * 登録されているすべての標本データを取得します。
+   * --- 標本情報の取得 ---
+   * 世界に散らばるすべての標本データを取得します。
+   * @param signal - 通信を中断するための信号
+   * @returns 標本データの配列
    */
-  async getAllBadges(): Promise<Badge[]> {
-    // 1. ブラウザ側（クライアント）で実行されている場合、専用のAPIを呼び出します
+  async getAllBadges(signal?: AbortSignal): Promise<Badge[]> {
+    // 1. クライアント側（ブラウザ）で実行されている場合、専用の内部APIを呼び出します
     if (typeof window !== "undefined") {
       try {
-        const res = await fetch("/api/badges");
-        const data: unknown[] = await res.json();
-        // 取得したデータを「設計図（BadgeSchema）」に従って検証し、きれいな形にして返します
-        return (data || []).map((badge) => BadgeSchema.parse(badge));
-      } catch (e) {
-        console.error("[BadgeService/Client] APIの取得に失敗しました:", e);
+        const res = await fetch("/api/v1/badges", { signal });
+        const result = await res.json();
+
+        if (result.success) {
+          return (result.data || []).map((badge: unknown) =>
+            BadgeSchema.parse(badge),
+          );
+        }
+        return [];
+      } catch (e: unknown) {
+        if (e instanceof Error && e.name === "AbortError") return [];
+        const message = e instanceof Error ? e.message : "不明なエラー";
+        console.warn("[BadgeService/Client] 標本取得を中断:", message);
         return [];
       }
     }
 
     // 2. サーバー側で実行されている場合、直接データベースに問い合わせます
     const client = supabaseAdmin || supabase;
-    if (!client) {
-      return []; // 接続できない場合は空のリストを返します（早期リターン）
-    }
+    if (!client) return [];
 
     const { data, error } = await client
       .from("badges")
@@ -40,31 +48,31 @@ export const BadgeService = {
       return [];
     }
 
-    // 検証して返します
     return (data || []).map((badge: unknown) => BadgeSchema.parse(badge));
   },
 
   /**
-   * --- 【第2章：プロフィール（冒険者情報）の取得】 ---
-   *
-   * @param userId 冒険者のID
+   * --- 冒険者プロフィールの取得 ---
+   * 特定のユーザーの設定やステータスを取得します。
+   * @param userId - ユーザーの固有ID
    */
-  async getProfile(userId: string) {
-    // 1. ブラウザ側での実行
+  async getProfile(userId: string, signal?: AbortSignal) {
     if (typeof window !== "undefined") {
       try {
-        const res = await fetch(`/api/profile/get?userId=${userId}`);
-        return await res.json();
-      } catch {
+        const res = await fetch(`/api/v1/profile/get?userId=${userId}`, {
+          signal,
+        });
+        const result = await res.json();
+        return result.success ? result.data : null;
+      } catch (e: unknown) {
+        if (e instanceof Error && e.name === "AbortError") return null;
         return null;
       }
     }
 
-    // 2. サーバー側での実行
     const client = supabaseAdmin || supabase;
     if (!client) return null;
 
-    // データがなくてもエラーを出さず、null を返す「maybeSingle」を使用します
     const { data, error } = await client
       .from("profiles")
       .select("*")
@@ -79,75 +87,61 @@ export const BadgeService = {
   },
 
   /**
-   * --- 【第3章：プロフィールの更新】 ---
-   * 冒険者の人数や最終活動日時を更新します。
+   * --- 標本の発見を記録 ---
+   * 冒険者が新たな標本を発見した事実を永続化します。
+   * @param userId - 発見したユーザーのID
+   * @param badgeId - 発見された標本のID
+   * @returns 保存された記録、またはエラー情報
    */
-  async updateProfile(userId: string, updates: { party_size?: number }) {
-    // 1. ブラウザ側での実行
+  async acquireBadge(userId: string, badgeId: string) {
+    // クライアント側からは直接呼ばず、APIルート (/api/v1/badges/acquire) を経由させる設計です
     if (typeof window !== "undefined") {
-      try {
-        const res = await fetch("/api/profile/update", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ userId, updates }),
-        });
-        const data = await res.json();
-        return data.success;
-      } catch {
-        return false;
-      }
+      throw new Error(
+        "BadgeService.acquireBadge はサーバーサイド専用のメソッドです。",
+      );
     }
 
-    // 2. サーバー側での実行
     const client = supabaseAdmin || supabase;
-    if (!client) return false;
+    if (!client)
+      throw new Error("データベースクライアントが初期化されていません。");
 
-    // 日本時間 (JST) の現在時刻文字列を作成します (UTC+9h)
-    const jstNow = new Date(Date.now() + 9 * 60 * 60 * 1000)
-      .toISOString()
-      .replace("Z", "")
-      .replace("T", " ");
+    // 1. 重複登録を試み、エラーをキャッチしてAPI側に委ねます
+    const { data, error } = await client
+      .from("user_badges")
+      .insert({
+        user_id: userId,
+        badge_id: badgeId,
+        acquired_at: new Date().toISOString(),
+      })
+      .select()
+      .single();
 
-    // upsert: データがあれば更新、なければ新しく作成します
-    const { error } = await client.from("profiles").upsert(
-      {
-        id: userId,
-        ...updates,
-        last_seen: jstNow,
-      },
-      { onConflict: "id" },
-    );
-
-    if (error) {
-      console.error("[BadgeService] プロフィール更新エラー:", error.message);
-    }
-
-    return !error; // エラーがなければ true を返します
+    return { data: data ? UserBadgeSchema.parse(data) : null, error };
   },
 
   /**
-   * --- 【第4章：獲得情報の管理】 ---
-   */
-
-  /**
-   * 冒険者がすでに獲得した標本のID一覧を取得します
-   */
-  async getAcquiredBadgeIds(userId: string): Promise<string[]> {
-    const rows = await this.getAcquiredBadges(userId);
-    return rows.map((r) => r.badge_id);
-  },
-
-  /**
-   * 獲得履歴を詳しく取得します
+   * --- 獲得済み標本リストの取得 ---
+   * ユーザーがこれまでに発見したすべての標本記録を取得します。
+   * @param userId - ユーザーID
    */
   async getAcquiredBadges(
     userId: string,
-  ): Promise<{ badge_id: string; acquired_at: string }[]> {
+    signal?: AbortSignal,
+  ): Promise<UserBadge[]> {
     if (typeof window !== "undefined") {
       try {
-        const res = await fetch(`/api/badges/acquired?userId=${userId}`);
-        return await res.json();
-      } catch {
+        const res = await fetch(`/api/v1/badges/acquired?userId=${userId}`, {
+          signal,
+        });
+        const result = await res.json();
+        if (result.success) {
+          return (result.data || []).map((b: unknown) =>
+            UserBadgeSchema.parse(b),
+          );
+        }
+        return [];
+      } catch (e: unknown) {
+        if (e instanceof Error && e.name === "AbortError") return [];
         return [];
       }
     }
@@ -155,52 +149,62 @@ export const BadgeService = {
     const client = supabaseAdmin || supabase;
     if (!client) return [];
 
-    const { data } = await client
+    const { data, error } = await client
       .from("user_badges")
-      .select("badge_id, acquired_at")
+      .select("*")
       .eq("user_id", userId);
 
-    return data || [];
+    if (error) {
+      console.error("[BadgeService] 獲得履歴取得エラー:", error.message);
+      return [];
+    }
+
+    return (data || []).map((b: unknown) => UserBadgeSchema.parse(b));
   },
 
   /**
-   * 新しい標本を獲得したことを記録します
+   * --- 獲得済み標本のIDリストのみを取得 ---
+   * 重複チェックなどのために、IDのみの配列を返します。
    */
-  async acquireBadge(
+  async getAcquiredBadgeIds(
     userId: string,
-    badgeId: string,
-  ): Promise<UserBadge | null> {
+    signal?: AbortSignal,
+  ): Promise<string[]> {
+    const acquired = await this.getAcquiredBadges(userId, signal);
+    return acquired.map((b) => b.badge_id);
+  },
+
+  /**
+   * --- プロフィールの更新 ---
+   */
+  async updateProfile(userId: string, updates: { party_size?: number }) {
     if (typeof window !== "undefined") {
-      const res = await fetch("/api/badges/acquire", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId, badgeId }),
-      });
-      return await res.json();
+      try {
+        const res = await fetch("/api/v1/profile/update", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ userId, updates }),
+        });
+        const result = await res.json();
+        return result.success;
+      } catch {
+        return false;
+      }
     }
 
     const client = supabaseAdmin || supabase;
-    if (!client) return null;
+    if (!client) return false;
 
-    // 冒険者のプロフィールを確実に作成しておきます
-    await client.from("profiles").upsert({ id: userId }, { onConflict: "id" });
-
-    // 日本時間で記録します
-    const jstNow = new Date(Date.now() + 9 * 60 * 60 * 1000)
-      .toISOString()
-      .replace("Z", "")
-      .replace("T", " ");
-
-    const { data, error } = await client
-      .from("user_badges")
-      .insert([{ user_id: userId, badge_id: badgeId, acquired_at: jstNow }])
-      .select()
-      .single();
+    const { error } = await client.from("profiles").upsert({
+      id: userId,
+      ...updates,
+      last_seen: new Date().toISOString(),
+    });
 
     if (error) {
-      console.error("[BadgeService] 標本獲得エラー:", error.message);
-      return null;
+      console.error("[BadgeService] プロフィール更新エラー:", error.message);
+      return false;
     }
-    return data;
+    return true;
   },
 };

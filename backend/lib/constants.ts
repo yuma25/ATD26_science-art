@@ -16,7 +16,7 @@ export interface SpecimenSettings {
 }
 
 /**
- * --- 【第1章：標本リストの定義】 ---
+ * --- 標本リストの定義 ---
  * 各標本の名前をキーにして、それぞれの見た目や動きの設定をまとめています。
  * 「冒険者のフィールドジャーナル」の世界観に合わせた標本たちが並びます。
  */
@@ -84,7 +84,7 @@ export const SPECIMEN_SETTINGS: Record<string, SpecimenSettings> = {
 };
 
 /**
- * --- 【第2章：デフォルト設定】 ---
+ * --- デフォルト設定 ---
  * 新しい標本が追加された際や、設定が見つからない場合に使用される標準的な設定です。
  */
 export const DEFAULT_SETTINGS: SpecimenSettings = {
@@ -98,7 +98,7 @@ export const DEFAULT_SETTINGS: SpecimenSettings = {
 };
 
 /**
- * --- 【第3章：設定取得用関数】 ---
+ * --- 設定取得用関数 ---
  * 標本の名前から、その標本の設定を安全に取り出すためのツールです。
  *
  * @param name 標本の名前

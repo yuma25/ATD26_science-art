@@ -11,7 +11,7 @@ const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 /**
- * --- 【第1章：クライアントの初期化】 ---
+ * --- クライアントの初期化 ---
  */
 
 // 1. 一般ユーザー用のクライアント（公開情報を扱う用）
@@ -30,7 +30,7 @@ export const supabaseAdmin =
     : null;
 
 /**
- * --- 【第2章：認証（サインイン）処理】 ---
+ * --- 認証（サインイン）処理 ---
  */
 
 /**
