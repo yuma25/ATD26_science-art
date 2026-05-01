@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@backend/lib/supabase";
+import { CacheService } from "@backend/services/cacheService";
 
 /**
  * 【統計データ取得API】
@@ -60,12 +61,29 @@ export async function GET(req: NextRequest) {
     const period = searchParams.get("period") || "24h";
     const userId = searchParams.get("userId");
 
+    // --- キャッシュの確認 (グローバル統計の場合のみ) ---
+    if (!userId) {
+      const cacheKey = `stats_global_${period}`;
+      const cachedData = await CacheService.get<unknown>(cacheKey);
+      if (cachedData) {
+        return NextResponse.json({
+          success: true,
+          data: cachedData,
+          fromCache: true,
+        });
+      }
+    }
+
     // --- データの取得と加工 ---
     let data;
     if (userId) {
       data = await handleUserDetailRequest(userId);
     } else {
       data = await handleGlobalStatsRequest(period);
+
+      // --- キャッシュの保存 (グローバル統計の場合のみ) ---
+      const cacheKey = `stats_global_${period}`;
+      await CacheService.set(cacheKey, data, 300); // 5分間キャッシュ
     }
 
     return NextResponse.json({
