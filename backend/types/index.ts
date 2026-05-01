@@ -17,7 +17,7 @@ export const BadgeSchema = z.object({
     .url("有効なURLを入力してください")
     .or(z.string().regex(/^\/.*$/, "相対パスは / から始めてください")), // モデルのパス
   target_index: z.number().int().min(0), // ARマーカーの番号
-  created_at: z.string().datetime().optional(), // 登録日時
+  created_at: z.string().optional(), // 登録日時（DB形式の差異を許容）
 });
 
 /**
@@ -27,7 +27,7 @@ export const UserBadgeSchema = z.object({
   id: z.string().uuid().optional(),
   user_id: z.string().min(1, "ユーザーIDは必須です"),
   badge_id: z.string().uuid("標本IDが正しくありません"),
-  acquired_at: z.string().datetime(), // ISO 8601形式
+  acquired_at: z.string(), // 獲得日時（DB形式の差異を許容）
 });
 
 /**

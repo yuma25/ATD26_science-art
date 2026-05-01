@@ -43,7 +43,12 @@ export const useHome = () => {
     setSyncing(true);
 
     try {
-      if (!supabase) throw new Error("Supabase client not initialized");
+      if (!supabase) {
+        console.warn(
+          "⚠️ Supabase クライアントが初期化されていません。環境変数（NEXT_PUBLIC_SUPABASE_URL 等）を確認してください。",
+        );
+        return;
+      }
 
       // 1. セッションがあるか確認
       const {
