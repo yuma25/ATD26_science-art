@@ -76,9 +76,7 @@ export const FinalLogModal = ({
               {/* 内容エリア：達成メッセージ、日時、ユーザーID */}
               <div className="space-y-8 py-4 text-[#3e2f28]">
                 <div className="space-y-1">
-                  <p className="text-xl font-bold italic">
-                    All Specimens Recorded
-                  </p>
+                  <p className="text-xl font-bold italic">全標本の記録完了</p>
                   {/* 発見した標本数を示すインジケーターバー */}
                   <div className="flex justify-center gap-1.5 mt-3">
                     {badges.map((_, i) => (
@@ -108,7 +106,7 @@ export const FinalLogModal = ({
                   onClick={onClose}
                   className="w-full py-4 bg-[#3e2f28] text-[#fdfaf2] text-[10px] font-black uppercase tracking-widest hover:bg-[#000] transition-all shadow-xl"
                 >
-                  Return to Journal
+                  戻る
                 </button>
               </div>
             </div>

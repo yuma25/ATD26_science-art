@@ -194,7 +194,7 @@ async function handleGlobalStatsRequest(period: string) {
   const { data: allRecentBadges } = await supabaseAdmin
     .from("user_badges")
     .select("acquired_at, user_id")
-    .gte("acquired_at", startDate.toISOString());
+    .gte("acquired_at", getJSTISOString(startDate));
 
   const recentBadges = (allRecentBadges || []).filter(
     (b) => b?.user_id && !adminIds.includes(b.user_id),
@@ -231,6 +231,29 @@ async function handleGlobalStatsRequest(period: string) {
 }
 
 /**
+ * 【ユーティリティ】DBから取得したJSTの日時文字列を正しく解析
+ */
+function parseJST(dateStr: string): Date {
+  if (!dateStr) return new Date();
+  // DBにはタイムゾーンなしのJST（例: 2026-05-05T09:00:00）が格納されているため、
+  // JavaScriptにJSTとして解釈させるために "+09:00" を付与します。
+  const isoStr =
+    dateStr.includes("+") || dateStr.includes("Z")
+      ? dateStr
+      : `${dateStr.replace(" ", "T")}+09:00`;
+  return new Date(isoStr);
+}
+
+/**
+ * 【ユーティリティ】クエリ用のJST文字列を生成
+ */
+function getJSTISOString(date: Date): string {
+  const offset = 9 * 60 * 60 * 1000;
+  const jstDate = new Date(date.getTime() + offset);
+  return jstDate.toISOString().replace("Z", "");
+}
+
+/**
  * 【ユーティリティ】日付を日本時間 (JST) の読みやすい形式に変換
  */
 function formatToJST(dateStr: string) {
@@ -243,7 +266,7 @@ function formatToJST(dateStr: string) {
     minute: "2-digit",
     second: "2-digit",
     hour12: false,
-  }).format(new Date(dateStr));
+  }).format(parseJST(dateStr));
 }
 
 /**
@@ -304,10 +327,10 @@ function generateTimeSeries(
     const label = type === "day" ? labelKey : labelKey.split(" ")[1];
 
     const devices = profiles.filter(
-      (p) => getJSTKey(new Date(p.created_at), type) === labelKey,
+      (p) => getJSTKey(parseJST(p.created_at), type) === labelKey,
     ).length;
     const badgeCount = badges.filter(
-      (b) => getJSTKey(new Date(b.acquired_at), type) === labelKey,
+      (b) => getJSTKey(parseJST(b.acquired_at), type) === labelKey,
     ).length;
 
     stats.push({ hour: label, devices, badges: badgeCount });

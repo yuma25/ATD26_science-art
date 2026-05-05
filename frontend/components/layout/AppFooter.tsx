@@ -25,7 +25,7 @@ export const AppFooter = () => {
           href="/admin/login"
           className="text-[10px] font-bold uppercase tracking-[0.2em] border border-[#3e2f28]/30 px-2 py-1 rounded hover:bg-[#3e2f28] hover:text-[#e8e2d2] transition-colors"
         >
-          Archive Access
+          管理者ログイン
         </Link>
       </div>
     </footer>

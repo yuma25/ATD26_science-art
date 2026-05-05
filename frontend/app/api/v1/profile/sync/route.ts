@@ -36,7 +36,6 @@ export async function POST(request: NextRequest) {
     const { error } = await supabaseAdmin.from("profiles").upsert(
       {
         id: userId,
-        last_seen: new Date().toISOString(),
       },
       { onConflict: "id" },
     );

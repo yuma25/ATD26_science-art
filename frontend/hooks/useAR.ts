@@ -263,5 +263,78 @@ export const useAR = () => {
       }, 300);
     }, [cleanupAR]),
     setShowSuccess,
+    // 記念撮影（キャプチャ）処理
+    captureImage: useCallback(async () => {
+      // a-scene 要素は A-Frame のカスタム要素であるため、必要なプロパティを持つことを想定します
+      const sceneEl = document.querySelector("a-scene") as HTMLElement & {
+        components: {
+          screenshot: { getCanvas: (type: string) => HTMLCanvasElement };
+        };
+        renderer: { render: (scene: unknown, camera: unknown) => void };
+        camera: unknown;
+        object3D: unknown;
+        canvas: HTMLCanvasElement;
+      };
+      const videoEl = document.querySelector("video");
+      if (!sceneEl || !videoEl) {
+        console.warn("🚫 キャプチャに必要な要素が見つかりません。");
+        return;
+      }
+
+      try {
+        // 1. キャンバスの準備（ビデオの解像度に合わせる）
+        const canvas = document.createElement("canvas");
+        canvas.width = videoEl.videoWidth;
+        canvas.height = videoEl.videoHeight;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return;
+
+        // 2. 背面のビデオ映像を描画
+        ctx.drawImage(videoEl, 0, 0, canvas.width, canvas.height);
+
+        // 3. 前面のA-Frame（3Dモデル）を描画
+        // renderer と camera が利用可能な場合にのみ実行
+        if (sceneEl.renderer && sceneEl.camera) {
+          // 重要：キャプチャ直前に現在の状態を強制的にレンダリングします
+          // これにより preserveDrawingBuffer の制限や描画タイミングの問題を回避します
+          sceneEl.renderer.render(sceneEl.object3D, sceneEl.camera);
+
+          const aframeCanvas = sceneEl.canvas;
+          if (aframeCanvas) {
+            // A-Frameのキャンバスをビデオのサイズに合わせて合成
+            ctx.drawImage(aframeCanvas, 0, 0, canvas.width, canvas.height);
+          }
+        }
+
+        // 4. 画像としてダウンロード
+        const dataUrl = canvas.toDataURL("image/jpeg", 0.9);
+        const link = document.createElement("a");
+        const timestamp =
+          new Date()
+            .toLocaleDateString("ja-JP", {
+              year: "numeric",
+              month: "2-digit",
+              day: "2-digit",
+            })
+            .replace(/\//g, "-") +
+          "_" +
+          new Date()
+            .toLocaleTimeString("ja-JP", {
+              hour12: false,
+              hour: "2-digit",
+              minute: "2-digit",
+              second: "2-digit",
+            })
+            .replace(/:/g, "-");
+
+        link.download = `specimen-${timestamp}.jpg`;
+        link.href = dataUrl;
+        link.click();
+
+        console.log("📸 写真を保存しました:", link.download);
+      } catch (e) {
+        console.error("🚫 キャプチャの保存に失敗しました:", e);
+      }
+    }, []),
   };
 };

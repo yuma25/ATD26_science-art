@@ -113,13 +113,17 @@ export default function AdminDashboard() {
         const {
           data: { session },
         } = await supabase.auth.getSession();
-        const res = await fetch(`/api/admin/stats?period=${period}`, {
+        const res = await fetch(`/api/v1/admin/stats?period=${period}`, {
           headers: { Authorization: `Bearer ${session?.access_token}` },
           signal: controller.signal,
         });
         if (!res.ok) throw new Error("通信エラー");
-        const data = await res.json();
-        setStats(data);
+        const json = await res.json();
+        if (json.success) {
+          setStats(json.data);
+        } else {
+          throw new Error(json.error?.message || "データ取得失敗");
+        }
       } catch (err: unknown) {
         if (err instanceof Error && err.name === "AbortError") return;
         const message = err instanceof Error ? err.message : "不明なエラー";
@@ -157,12 +161,12 @@ export default function AdminDashboard() {
       const {
         data: { session },
       } = await supabase.auth.getSession();
-      const res = await fetch(`/api/admin/stats?userId=${id}`, {
+      const res = await fetch(`/api/v1/admin/stats?userId=${id}`, {
         headers: { Authorization: `Bearer ${session?.access_token}` },
       });
-      const data = await res.json();
-      if (data.error) throw new Error(data.error);
-      setSelectedUser(data.userDetails);
+      const json = await res.json();
+      if (!json.success) throw new Error(json.error?.message || "検索失敗");
+      setSelectedUser(json.data.userDetails);
     } catch (err: unknown) {
       setSearchError(err instanceof Error ? err.message : "検索失敗");
       setSelectedUser(null);
@@ -276,10 +280,10 @@ function NavigationBar({
           </div>
           <button
             onClick={() => router.push("/")}
-            className="hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-lg border border-[#3e2f28]/10 text-xs font-bold"
+            className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-[#3e2f28]/10 text-xs font-bold hover:bg-[#3e2f28]/5 transition-colors"
           >
             <Home className="w-3.5 h-3.5" />
-            メイン画面を表示
+            <span className="hidden sm:inline">メイン画面を表示</span>
           </button>
         </div>
         <button

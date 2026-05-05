@@ -93,7 +93,7 @@ export const AppHeader = ({
             />
           </div>
           <span className="font-data text-[10px] sm:text-[11px] font-black uppercase tracking-[0.2em] pt-0.5">
-            Scan
+            スキャン
           </span>
         </button>
       </div>

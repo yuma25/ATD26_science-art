@@ -34,7 +34,7 @@ export default function Home() {
     partySize, // 来場人数
     showPartyInput, // 人数入力モーダルの表示フラグ
     cameraPermission, // カメラ権限の状態
-    isAcquired, // 指定したIDの標本獲得済みか判定する関数
+    isAcquired, // 指定したIDের標本獲得済みか判定する関数
     requestCameraPermission, // カメラ権限をリクエストする関数
     updatePartySize, // 人数を更新する関数
   } = useHome();
@@ -111,7 +111,7 @@ export default function Home() {
                 strokeWidth={1.5}
               />
               <span className="absolute -bottom-4 left-1/2 -translate-x-1/2 text-[8px] font-bold opacity-0 group-hover:opacity-100 transition-opacity">
-                ADMIN
+                管理者
               </span>
             </button>
             <h1 className="text-lg sm:text-2xl font-bold tracking-tight italic whitespace-nowrap">
@@ -186,14 +186,14 @@ export default function Home() {
                   strokeWidth={1.5}
                 />
                 <span className="text-[11px] font-black uppercase tracking-[0.2em]">
-                  Entry
+                  入口
                 </span>
               </div>
             </div>
           </div>
 
           {/* 標本カード一覧 */}
-          <div className="space-y-60 relative z-20">
+          <div className="space-y-24 relative z-20">
             {badges.map((badge) => (
               <BadgeCard
                 key={badge.id}
@@ -303,7 +303,7 @@ export default function Home() {
                     onClick={() => router.push("/admin/login")}
                     className="text-[9px] font-bold text-[#3e2f28]/30 hover:text-[#3e2f28]/60 transition-colors uppercase tracking-[0.2em]"
                   >
-                    — Administrator Access —
+                    — 管理者用アクセス —
                   </button>
                 </div>
               </div>

@@ -1,8 +1,7 @@
 "use client";
 
-import React, { useEffect, useState, Suspense } from "react";
+import React, { useEffect, useState, Suspense, useMemo } from "react";
 import { useSearchParams } from "next/navigation";
-import Script from "next/script";
 import { Move } from "lucide-react";
 import { CloseButton } from "../../components/layout/CloseButton";
 
@@ -40,17 +39,22 @@ const ModelViewer = (props: ModelViewerProps) => {
 function ModelViewerContent() {
   const searchParams = useSearchParams();
 
-  // URLパラメータから表示するモデルの情報を取得します
-  const modelUrl = searchParams.get("model") || "/butterfly.glb";
-  const name = searchParams.get("name") || "標本";
-
+  // マウント後の処理（クライアントサイドのみで実行）
   const [mounted, setMounted] = useState(false);
 
-  // マウント後の処理（クライアントサイドのみで実行）
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true);
   }, []);
+
+  // URLパラメータから表示するモデルの情報を取得します
+  // 💡 レンダリングの度に値が変わるのを防ぐため、useMemo を使用します。
+  // eslint-disable-next-line react-hooks/purity
+  const cacheBuster = useMemo(() => Date.now().toString(), []);
+
+  const modelUrl =
+    (searchParams.get("model") || "/butterfly.glb") + "?v=" + cacheBuster;
+  const name = searchParams.get("name") || "標本";
 
   // 1. マウントされるまでは何も表示しません（ハイドレーションエラー防止）
   if (!mounted) return null;
@@ -65,12 +69,6 @@ function ModelViewerContent() {
         position: "fixed",
       }}
     >
-      {/* 2. <model-viewer> ライブラリを読み込みます */}
-      <Script
-        type="module"
-        src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.5.0/model-viewer.min.js"
-      />
-
       {/* 3. ヘッダー UI（標本名を表示） */}
       <div
         style={{
@@ -152,7 +150,7 @@ function ModelViewerContent() {
             letterSpacing: "0.2em",
           }}
         >
-          INITIALIZING 3D SPECIMEN...
+          3D標本を初期化中...
         </div>
       </ModelViewer>
 

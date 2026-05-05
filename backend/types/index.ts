@@ -11,7 +11,6 @@ import { z } from "zod";
 export const BadgeSchema = z.object({
   id: z.string().uuid(), // 固有のID（UUID形式）
   name: z.string().min(1, "名前は必須です"), // 標本の名前
-  description: z.string().default(""), // 標本の解説文
   model_url: z
     .string()
     .url("有効なURLを入力してください")

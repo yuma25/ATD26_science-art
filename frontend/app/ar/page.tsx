@@ -6,6 +6,7 @@ import { useAR } from "@/hooks/useAR";
 import { DiscoveryComplete } from "@/components/ar/DiscoveryComplete";
 import { CloseButton } from "@/components/layout/CloseButton";
 import { getSpecimenSettings } from "@backend/lib/constants";
+import { Camera } from "lucide-react";
 
 /**
  * 【ARカメラ画面】
@@ -28,6 +29,7 @@ export default function ARPage() {
     setupListeners, // マーカーの認識イベントを設定する関数
     navigateHome, // ホーム画面に戻る関数
     setShowSuccess, // 成功メッセージの表示を切り替える関数
+    captureImage, // キャプチャを実行する関数
   } = useAR();
 
   const [ready, setReady] = useState(false); // スクリプトの読み込み完了フラグ
@@ -64,17 +66,65 @@ export default function ARPage() {
     const init = async () => {
       setStatus("loading");
       try {
-        // 1. A-Frame (3Dエンジン)
+        // 1. 基本ライブラリ
         await loadScript("https://aframe.io/releases/1.5.0/aframe.min.js");
-        // 2. A-Frame Extras (アニメーション再生用)
         await loadScript(
           "https://cdn.jsdelivr.net/gh/c-frame/aframe-extras@7.2.0/dist/aframe-extras.min.js",
         );
-        // 3. MindAR (画像認識・AR追従)
+        // 2. ARエンジン
         await loadScript(
           "https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js",
         );
+        // 3. デコーダー (Meshopt & Draco)
+        await loadScript(
+          "https://unpkg.com/meshoptimizer@0.21.0/meshopt_decoder.js",
+        );
+        await loadScript(
+          "https://www.gstatic.com/draco/versioned/decoders/1.5.6/draco_decoder.js",
+        );
 
+        // --- デコーダーの強制注入パッチ ---
+        const AFRAME = (window as any).AFRAME;
+        const MeshoptDecoder = (window as any).MeshoptDecoder;
+
+        if (AFRAME && AFRAME.THREE) {
+          const THREE = AFRAME.THREE;
+          if (MeshoptDecoder && MeshoptDecoder.ready)
+            await MeshoptDecoder.ready;
+
+          if (THREE.GLTFLoader) {
+            // パッチ: ローダーが生成された瞬間にデコーダーを叩き込む
+            const patchLoader = (loader: any) => {
+              if (MeshoptDecoder) loader.setMeshoptDecoder(MeshoptDecoder);
+              if ((window as any).DracoDecoder) {
+                const dracoLoader = new (THREE as any).DRACOLoader();
+                dracoLoader.setDecoderPath(
+                  "https://www.gstatic.com/draco/versioned/decoders/1.5.6/",
+                );
+                loader.setDRACOLoader(dracoLoader);
+              }
+            };
+
+            const _load = THREE.GLTFLoader.prototype.load;
+            THREE.GLTFLoader.prototype.load = function (...args: any[]) {
+              patchLoader(this);
+              return _load.apply(this, args);
+            };
+
+            const _parse = THREE.GLTFLoader.prototype.parse;
+            THREE.GLTFLoader.prototype.parse = function (...args: any[]) {
+              patchLoader(this);
+              return _parse.apply(this, args);
+            };
+
+            // 静的登録
+            if (THREE.GLTFLoader.setMeshoptDecoder) {
+              THREE.GLTFLoader.setMeshoptDecoder(MeshoptDecoder);
+            }
+          }
+        }
+
+        await new Promise((r) => setTimeout(r, 300));
         setReady(true);
         setStatus("started");
       } catch (e) {
@@ -127,16 +177,13 @@ export default function ARPage() {
       <a-scene 
         mindar-image="imageTargetSrc: /targets.mind?v=${v}; autoStart: false; uiLoading: no; uiScanning: no; maxTrack: 1; filterMinCF: 0.001; filterBeta: 10; missTolerance: 0;" 
         color-space="sRGB" 
-        renderer="exposure: 1.0; alpha: true; antialias: true;" 
+        renderer="exposure: 1.0; alpha: true; antialias: true; physicallyCorrectLights: true; preserveDrawingBuffer: true;" 
         vr-mode-ui="enabled: false" 
         device-orientation-permission-ui="enabled: false" 
         loading-screen="enabled: false" 
         embedded 
         style="width: 100%; height: 100%; position: absolute; top: 0; left: 0;"
       >
-        <a-assets timeout="10000">
-          ${allBadges.map((b) => `<a-asset-item id="model-item-${b.target_index}" src="${b.model_url}"></a-asset-item>`).join("")}
-        </a-assets>
         <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
 
         <!-- 物理ベースライティングへの対応 -->
@@ -147,6 +194,14 @@ export default function ARPage() {
           .map((badge) => {
             const settings = getSpecimenSettings(badge.name);
             const physicalIndex = badge.target_index;
+
+            // パラメータの取得
+            const pos = settings.position || "0 0 0";
+            const rot = settings.rotation || "0 0 0";
+            const mixer =
+              settings.animationMixer ||
+              "clip: *; loop: repeat; timeScale: 1.2";
+
             return `
             <a-entity mindar-image-target="targetIndex: ${physicalIndex}">
               <a-entity id="model-container-${physicalIndex}" visible="false">
@@ -155,9 +210,11 @@ export default function ARPage() {
                     <a-gltf-model 
                       class="ar-model"
                       id="model-el-${physicalIndex}"
-                      src="#model-item-${badge.target_index}" 
+                      src="${badge.model_url}?v=${v}" 
                       scale="${settings.scale}" 
-                      animation-mixer="clip: *; loop: repeat; timeScale: 1.2"
+                      position="${pos}"
+                      rotation="${rot}"
+                      animation-mixer="${mixer}"
                       data-min-scale="${settings.minScale}"
                       data-max-scale="${settings.maxScale}"
                     ></a-gltf-model>
@@ -296,7 +353,7 @@ export default function ARPage() {
                 opacity: 0.5,
               }}
             >
-              SYNCHRONIZING ARCHIVE...
+              アーカイブ同期中...
             </p>
           </div>
         )}
@@ -328,7 +385,7 @@ export default function ARPage() {
                     fontSize: "9px",
                   }}
                 >
-                  INDEX {activeBadge.target_index}: {activeBadge.name}
+                  標本番号 {activeBadge.target_index}: {activeBadge.name}
                 </div>
               )}
 
@@ -346,7 +403,7 @@ export default function ARPage() {
                     borderRadius: "4px",
                   }}
                 >
-                  SCANNING FOR SPECIMENS...
+                  標本をスキャン中...
                 </div>
               )}
 
@@ -361,7 +418,7 @@ export default function ARPage() {
                       marginBottom: "12px",
                     }}
                   >
-                    ANALYZING {progress}%
+                    解析中 {progress}%
                   </div>
                   <div
                     style={{
@@ -408,6 +465,53 @@ export default function ARPage() {
       `,
         }}
       />
+
+      {/* シャッターボタン (画面下部中央) */}
+      {status === "started" && !isExiting && (
+        <div
+          style={{
+            position: "fixed",
+            bottom: "40px",
+            left: "50%",
+            transform: "translateX(-50%)",
+            zIndex: 100,
+            pointerEvents: "auto",
+          }}
+        >
+          <button
+            onClick={captureImage}
+            style={{
+              width: "72px",
+              height: "72px",
+              borderRadius: "50%",
+              backgroundColor: "rgba(255, 255, 255, 0.3)",
+              border: "4px solid #fff",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              cursor: "pointer",
+              boxShadow: "0 4px 12px rgba(0,0,0,0.2)",
+              backdropFilter: "blur(4px)",
+            }}
+            aria-label="Take Photo"
+          >
+            <div
+              style={{
+                width: "56px",
+                height: "56px",
+                borderRadius: "50%",
+                backgroundColor: "#fff",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                color: "#3e2f28",
+              }}
+            >
+              <Camera size={28} strokeWidth={1.5} />
+            </div>
+          </button>
+        </div>
+      )}
 
       {/* 閉じるボタン */}
       <CloseButton onClick={navigateHome} />

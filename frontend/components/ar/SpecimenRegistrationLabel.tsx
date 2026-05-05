@@ -78,7 +78,7 @@ export const SpecimenRegistrationLabel = ({
             opacity: 0.5,
           }}
         >
-          Archive Entry Confirmed
+          アーカイブへの記録を確認
         </p>
         <h2
           style={{
@@ -107,10 +107,10 @@ export const SpecimenRegistrationLabel = ({
               opacity: 0.4,
             }}
           >
-            Classification
+            分類
           </label>
           <p style={{ margin: 0, fontSize: "12px", fontFamily: "monospace" }}>
-            Digital Specimen
+            デジタル標本
           </p>
         </div>
         <div>
@@ -123,7 +123,7 @@ export const SpecimenRegistrationLabel = ({
               opacity: 0.4,
             }}
           >
-            Status
+            状態
           </label>
           <p
             style={{
@@ -133,7 +133,7 @@ export const SpecimenRegistrationLabel = ({
               color: "#3b82f6",
             }}
           >
-            PRESERVED
+            保存済み
           </p>
         </div>
       </div>
@@ -150,11 +150,11 @@ export const SpecimenRegistrationLabel = ({
           opacity: 0.6,
         }}
       >
-        DATE: {new Date().toLocaleDateString()}
+        日付: {new Date().toLocaleDateString()}
         <br />
-        TYPE: AR-RECONSTRUCTION
+        種別: AR再構成
         <br />
-        LOCATION: REMOTE_NODE
+        場所: リモートノード
       </div>
     </div>
   );

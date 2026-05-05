@@ -94,24 +94,36 @@ export const BadgeService = {
    * @returns 保存された記録、またはエラー情報
    */
   async acquireBadge(userId: string, badgeId: string) {
-    // クライアント側からは直接呼ばず、APIルート (/api/v1/badges/acquire) を経由させる設計です
+    // 1. クライアント側（ブラウザ）で実行されている場合、専用のAPIエンドポイントを呼び出します
     if (typeof window !== "undefined") {
-      throw new Error(
-        "BadgeService.acquireBadge はサーバーサイド専用のメソッドです。",
-      );
+      try {
+        const res = await fetch("/api/v1/badges/acquire", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ userId, badgeId }),
+        });
+        const result = await res.json();
+        return {
+          data: result.success ? result.data : null,
+          error: result.success ? null : result.error,
+        };
+      } catch (e: unknown) {
+        console.error("[BadgeService/Client] 標本獲得の記録に失敗:", e);
+        return { data: null, error: e };
+      }
     }
 
+    // 2. サーバー側で実行されている場合、直接データベースに問い合わせます
     const client = supabaseAdmin || supabase;
     if (!client)
       throw new Error("データベースクライアントが初期化されていません。");
 
-    // 1. 重複登録を試み、エラーをキャッチしてAPI側に委ねます
+    // 重複登録を試み、エラーをキャッチしてAPI側に委ねます
     const { data, error } = await client
       .from("user_badges")
       .insert({
         user_id: userId,
         badge_id: badgeId,
-        acquired_at: new Date().toISOString(),
       })
       .select()
       .single();
@@ -198,7 +210,6 @@ export const BadgeService = {
     const { error } = await client.from("profiles").upsert({
       id: userId,
       ...updates,
-      last_seen: new Date().toISOString(),
     });
 
     if (error) {
