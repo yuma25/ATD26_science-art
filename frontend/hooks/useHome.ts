@@ -133,6 +133,7 @@ export const useHome = () => {
     fullUserId: userId,
     displayId,
     partySize: profile?.party_size ?? (userId ? null : undefined),
+    isExchanged: profile?.is_exchanged ?? false,
     showPartyInput:
       (profile?.party_size === undefined || profile?.party_size === null) &&
       userId !== "" &&
@@ -159,6 +160,16 @@ export const useHome = () => {
       if (ok) {
         void mutateProfile();
         void mutateSession();
+      }
+      return ok;
+    },
+    exchangePrize: async () => {
+      if (!userId) return false;
+      const ok = await BadgeService.updateProfile(userId, {
+        is_exchanged: true,
+      });
+      if (ok) {
+        void mutateProfile();
       }
       return ok;
     },

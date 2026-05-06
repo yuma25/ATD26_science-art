@@ -12,11 +12,12 @@ AR体験で使用されるデジタル標本のマスターデータです。
 
 | カラム名       | 型        | Zod バリデーション    | 説明                             |
 | :------------- | :-------- | :-------------------- | :------------------------------- |
-| `id`           | UUID (PK) | `uuid()`              | バッジの一意の識別子             |
-| `name`         | String    | `min(1)`              | バッジの表示名                   |
+| `id`           | UUID (PK) | `uuid()`              | 作品の一意の識別子               |
+| `name`         | String    | `min(1)`              | 作品の表示名                     |
 | `target_index` | Integer   | `int().min(0)`        | ARマーカーのインデックス (0-5)   |
-| `model_url`    | String    | `url()`               | 3Dモデルファイル (.glb) へのパス |
-| `created_at`   | Timestamp | `string().optional()` | 登録日時（形式の差異を許容）     |
+| `model_url`    | String    | `url()`               | AR表示用の 3D モデル (.glb) パス |
+| `image_url`    | String    | `url()`               | 詳細表示用の 2D 画像 (.jpg) パス |
+| `created_at`   | Timestamp | `string().optional()` | 登録日時（日本時間 JST）         |
 
 ---
 
@@ -42,11 +43,12 @@ AR体験で使用されるデジタル標本のマスターデータです。
 
 ユーザー固有の設定およびステータスです。
 
-| カラム名     | 型        | 説明                                      |
-| :----------- | :-------- | :---------------------------------------- |
-| `id`         | UUID (PK) | ユーザーID (Supabase Auth.users と紐付け) |
-| `party_size` | Integer   | ロジック計算用のパーティー人数            |
-| `last_seen`  | Timestamp | 最終アクティビティのタイムスタンプ        |
+| カラム名       | 型        | 説明                                      |
+| :------------- | :-------- | :---------------------------------------- |
+| `id`           | UUID (PK) | ユーザーID (Supabase Auth.users と紐付け) |
+| `party_size`   | Integer   | ロジック計算用のパーティー人数            |
+| `is_exchanged` | Boolean   | 景品交換済みフラグ（初期値: false）       |
+| `last_seen`    | Timestamp | 最終アクティビティのタイムスタンプ        |
 
 ---
 

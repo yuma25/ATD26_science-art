@@ -34,11 +34,13 @@ export default function Home() {
     fullUserId, // 内部処理用ID
     displayId, // 💡 表示用ID
     partySize, // 来場人数
+    isExchanged, // 💡 追加：交換済みフラグ
     showPartyInput, // 人数入力モーダルの表示フラグ
     cameraPermission, // カメラ権限の状態
     isAcquired, // 指定したIDの標本獲得済みか判定する関数
     requestCameraPermission, // カメラ権限をリクエストする関数
     updatePartySize, // 人数を更新する関数
+    exchangePrize, // 💡 追加：交換実行関数
   } = useHome();
 
   const { saveScroll, restoreScroll } = useScrollManager(); // スクロール位置の管理
@@ -256,7 +258,10 @@ export default function Home() {
         onClose={() => setShowFinalLog(false)}
         completionTime={completionTime}
         fullUserId={fullUserId}
+        displayId={displayId}
         badges={badges}
+        isExchanged={isExchanged}
+        onExchange={exchangePrize}
       />
 
       {/* 初回来場時の人数入力モーダル */}
@@ -337,7 +342,6 @@ export default function Home() {
       </AnimatePresence>
 
       <footer className="h-20" />
-      <span className="hidden">{completionTime}</span>
     </div>
   );
 }

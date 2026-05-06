@@ -85,5 +85,6 @@ export const UpdateProfileRequestSchema = z.object({
   userId: z.string().min(1),
   updates: z.object({
     party_size: z.number().int().min(1).max(10).optional(),
+    is_exchanged: z.boolean().optional(), // 💡 追加
   }),
 });

@@ -21,8 +21,8 @@ import { greatWave } from "./great-wave";
 import { moonJelly } from "./moon-jelly";
 
 /**
- * --- 標本リストの定義 ---
- * 各標本の名前をキーにして、それぞれの設定をマッピングします。
+ * --- 作品リストの定義 ---
+ * 各作品の名前をキーにして、AR表示用の設定をマッピングします。
  */
 export const SPECIMEN_SETTINGS: Record<string, SpecimenSettings> = {
   蝶: commonBlue,

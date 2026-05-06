@@ -1,16 +1,24 @@
+# 🗄️ データベース構築ガイド (SQL)
+
+本ドキュメントは、アプリケーションの動作に必要な Supabase (PostgreSQL) のテーブル構造と初期データを定義する最新の SQL コードです。
+
+---
+
+## 1. テーブル定義と初期化
+
+以下の SQL を Supabase の SQL Editor で実行することで、データベースを構築できます。タイムスタンプはすべて日本時間 (JST) で統一されています。
+
+```sql
 -- ==========================================
 -- 🎨 ATD26_SCIENCE-ART: データベース初期化 SQL
 -- ==========================================
--- 構成: バッジ（絵画作品）、来場人数管理、ARマーカー連携
 
--- 1. 既存のテーブルを削除
+-- 1. 既存のテーブルを削除（リセット用）
 drop table if exists public.user_badges;
 drop table if exists public.badges;
 drop table if exists public.profiles;
 
--- 2. テーブルの作成
-
--- プロフィール（来場者管理）
+-- 2. プロフィール（来場者管理）
 create table public.profiles (
   id uuid references auth.users on delete cascade not null primary key,
   party_size int default null, -- 来場人数
@@ -19,7 +27,7 @@ create table public.profiles (
   last_seen timestamp default (now() + interval '9 hours')
 );
 
--- バッジ（絵画作品マスター）
+-- 3. 作品マスター（バッジ）
 create table public.badges (
   id uuid default gen_random_uuid() primary key,
   name text not null,
@@ -29,7 +37,7 @@ create table public.badges (
   created_at timestamp default (now() + interval '9 hours') not null
 );
 
--- ユーザー獲得記録
+-- 4. ユーザー獲得記録
 create table public.user_badges (
   id uuid default gen_random_uuid() primary key,
   user_id uuid references public.profiles(id) on delete cascade not null,
@@ -38,7 +46,7 @@ create table public.user_badges (
   unique(user_id, badge_id)
 );
 
--- 3. セキュリティ設定（開発用の一時的な緩和）
+-- 5. セキュリティ設定（RLSの無効化：開発時のみ）
 alter table public.profiles disable row level security;
 alter table public.badges disable row level security;
 alter table public.user_badges disable row level security;
@@ -47,7 +55,7 @@ grant all on public.profiles to anon, authenticated, service_role;
 grant all on public.badges to anon, authenticated, service_role;
 grant all on public.user_badges to anon, authenticated, service_role;
 
--- 4. 作品データの投入（ダミー）
+-- 6. 初期データの投入
 insert into public.badges (name, model_url, image_url, target_index)
 values
   ('蝶', '/butterfly.glb', '/images/paintings/painting_0.jpg', 0),
@@ -57,7 +65,7 @@ values
   ('波', '/wave.glb', '/images/paintings/painting_4.jpg', 4),
   ('クラゲ', '/jellyfish.glb', '/images/paintings/painting_5.jpg', 5);
 
--- 5. 新規ユーザー作成時の自動プロファイル作成
+-- 7. 自動プロファイル作成トリガー
 create or replace function public.handle_new_user()
 returns trigger as $$
 begin
@@ -68,12 +76,11 @@ begin
 end;
 $$ language plpgsql security definer;
 
-drop trigger if exists on_auth_user_created on auth.users;
 create trigger on_auth_user_created
   after insert on auth.users
   for each row execute procedure public.handle_new_user();
 
--- 6. アクティビティ更新（JST）
+-- 8. アクティビティ自動更新トリガー
 create or replace function public.handle_update_last_seen()
 returns trigger as $$
 begin
@@ -82,12 +89,15 @@ begin
 end;
 $$ language plpgsql;
 
-drop trigger if exists tr_update_last_seen on public.profiles;
 create trigger tr_update_last_seen
   before update on public.profiles
   for each row execute procedure public.handle_update_last_seen();
+```
 
--- 既存ユーザーのプロファイル作成（もしあれば）
-insert into public.profiles (id)
-select id from auth.users
-on conflict (id) do nothing;
+---
+
+## 2. SQLの役割解説
+
+- **JST統一**: `now() + interval '9 hours'` を使用することで、データベースレベルで日本時間に変換して格納しています。
+- **カスケード削除**: ユーザーが削除された際、紐付くプロフィールや獲得履歴も自動的に削除されます。
+- **複合ユニーク制約**: 同一ユーザーによる同一作品の重複獲得をデータベースレベルで防止しています。

@@ -118,6 +118,22 @@ export const BadgeService = {
     if (!client)
       throw new Error("データベースクライアントが初期化されていません。");
 
+    // 💡 外部キー制約エラー (23503) 対策: プロフィールの存在を確認し、なければ作成
+    try {
+      const { data: profile } = await client
+        .from("profiles")
+        .select("id")
+        .eq("id", userId)
+        .maybeSingle();
+
+      if (!profile) {
+        console.log(`🆕 Profile not found for ${userId}, creating now...`);
+        await client.from("profiles").upsert({ id: userId });
+      }
+    } catch (e) {
+      console.warn("⚠️ Profile check failed, proceeding anyway:", e);
+    }
+
     // 重複登録を試み、エラーをキャッチしてAPI側に委ねます
     const { data, error } = await client
       .from("user_badges")
@@ -189,7 +205,10 @@ export const BadgeService = {
   /**
    * --- プロフィールの更新 ---
    */
-  async updateProfile(userId: string, updates: { party_size?: number }) {
+  async updateProfile(
+    userId: string,
+    updates: { party_size?: number; is_exchanged?: boolean },
+  ) {
     if (typeof window !== "undefined") {
       try {
         const res = await fetch("/api/v1/profile/update", {
