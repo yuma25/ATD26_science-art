@@ -263,5 +263,94 @@ export const useAR = () => {
       }, 300);
     }, [cleanupAR]),
     setShowSuccess,
+    // 記念撮影（キャプチャ）処理
+    captureImage: useCallback(async () => {
+      // a-scene 要素は A-Frame のカスタム要素であるため、必要なプロパティを持つことを想定します
+      const sceneEl = document.querySelector("a-scene") as HTMLElement & {
+        components: {
+          screenshot: { getCanvas: (type: string) => HTMLCanvasElement };
+        };
+        renderer: { render: (scene: unknown, camera: unknown) => void };
+        camera: unknown;
+        object3D: unknown;
+        canvas: HTMLCanvasElement;
+      };
+      const videoEl = document.querySelector("video");
+      if (!sceneEl || !videoEl) {
+        console.warn("🚫 キャプチャに必要な要素が見つかりません。");
+        return;
+      }
+
+      try {
+        // 1. キャンバスの準備（ビデオの解像度に合わせる）
+        const canvas = document.createElement("canvas");
+        canvas.width = videoEl.videoWidth;
+        canvas.height = videoEl.videoHeight;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return;
+
+        // 2. 背面のビデオ映像を描画
+        ctx.drawImage(videoEl, 0, 0, canvas.width, canvas.height);
+
+        // 3. 前面のA-Frame（3Dモデル）を描画
+        // renderer と camera が利用可能な場合にのみ実行
+        if (sceneEl.renderer && sceneEl.camera) {
+          // 重要：キャプチャ直前に現在の状態を強制的にレンダリングします
+          // これにより preserveDrawingBuffer の制限や描画タイミングの問題を回避します
+          sceneEl.renderer.render(sceneEl.object3D, sceneEl.camera);
+
+          const aframeCanvas = sceneEl.canvas;
+          if (aframeCanvas) {
+            // A-Frameのキャンバスをビデオのサイズに合わせて合成
+            ctx.drawImage(aframeCanvas, 0, 0, canvas.width, canvas.height);
+          }
+        }
+
+        // 4. 保存または共有処理
+        const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
+        const fileName = `specimen-${timestamp}.jpg`;
+
+        // Canvas を Blob に変換
+        canvas.toBlob(
+          async (blob) => {
+            if (!blob) return;
+
+            // 共有機能（Web Share API）が使えるか確認
+            const file = new File([blob], fileName, { type: "image/jpeg" });
+            if (
+              navigator.share &&
+              navigator.canShare &&
+              navigator.canShare({ files: [file] })
+            ) {
+              try {
+                await navigator.share({
+                  files: [file],
+                  title: "標本の観察記録",
+                  text: "ARで標本を撮影しました！",
+                });
+                console.log("📸 共有メニューを表示しました");
+              } catch (shareError) {
+                // ユーザーがキャンセルした場合は何もしない
+                if ((shareError as Error).name !== "AbortError") {
+                  console.error("🚫 共有に失敗しました:", shareError);
+                }
+              }
+            } else {
+              // フォールバック: 従来のダウンロード方式
+              const dataUrl = canvas.toDataURL("image/jpeg", 0.9);
+              const link = document.createElement("a");
+              link.download = fileName;
+              link.href = dataUrl;
+              link.click();
+              console.log("📸 写真をダウンロードしました:", fileName);
+            }
+          },
+          "image/jpeg",
+          0.9,
+        );
+      } catch (e) {
+        console.error("🚫 キャプチャの保存に失敗しました:", e);
+      }
+    }, []),
   };
 };

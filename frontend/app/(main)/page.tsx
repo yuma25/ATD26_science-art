@@ -12,6 +12,7 @@ import {
   Users,
 } from "lucide-react";
 import { useHome } from "@/hooks/useHome";
+import { Badge } from "@backend/types";
 import { BadgeCard } from "@/components/BadgeCard";
 import { calculateProgress } from "@backend/lib/logic";
 import { useScrollManager } from "@/hooks/useScrollManager";
@@ -29,14 +30,17 @@ export default function Home() {
   const {
     badges, // 標本データの一覧
     syncing, // 同期中フラグ
+    initialLoading, // 💡 初回ロード中フラグ
     fullUserId, // 内部処理用ID
     displayId, // 💡 表示用ID
     partySize, // 来場人数
+    isExchanged, // 💡 追加：交換済みフラグ
     showPartyInput, // 人数入力モーダルの表示フラグ
     cameraPermission, // カメラ権限の状態
     isAcquired, // 指定したIDの標本獲得済みか判定する関数
     requestCameraPermission, // カメラ権限をリクエストする関数
     updatePartySize, // 人数を更新する関数
+    exchangePrize, // 💡 追加：交換実行関数
   } = useHome();
 
   const { saveScroll, restoreScroll } = useScrollManager(); // スクロール位置の管理
@@ -47,7 +51,7 @@ export default function Home() {
 
   // --- 進捗状況の計算 ---
   // 1. 獲得済みの標本数をカウントします
-  const acquiredCount = badges.filter((b) => isAcquired(b.id)).length;
+  const acquiredCount = badges.filter((b: Badge) => isAcquired(b.id)).length;
   // 2. すべての標本を集めたか判定します
   const isComplete = badges.length > 0 && acquiredCount === badges.length;
   // 3. 進捗率（0-100%）を計算します
@@ -66,16 +70,16 @@ export default function Home() {
   }, [isComplete]);
 
   // --- ライフサイクル処理 ---
-  // マウント時や同期完了時にスクロール位置を復元します
+  // マウント時や初回ロード完了時にスクロール位置を復元します
   useEffect(() => {
-    // 同期が完了し、データが存在する場合に実行
-    if (!syncing && badges.length > 0) {
+    // 初回ロードが完了し、データが存在する場合に実行
+    if (!initialLoading && badges.length > 0) {
       const timer = setTimeout(() => {
         restoreScroll();
       }, 100);
       return () => clearTimeout(timer);
     }
-  }, [syncing, badges, restoreScroll]);
+  }, [initialLoading, badges, restoreScroll]);
 
   // --- ユーザーアクション ---
   /**
@@ -95,6 +99,28 @@ export default function Home() {
 
   return (
     <div className="min-h-screen font-serif selection:bg-[#d4c5a9] text-[#3e2f28] flex flex-col relative">
+      {/* 💡 初回ロード中のオーバーレイ（データが空の場合のみ） */}
+      <AnimatePresence>
+        {initialLoading && badges.length === 0 && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[500] bg-[#e8e2d2] flex items-center justify-center"
+          >
+            <div className="flex flex-col items-center gap-4">
+              <RefreshCcw
+                size={32}
+                className="animate-spin text-[#3e2f28]/40"
+              />
+              <p className="text-[10px] font-black uppercase tracking-[0.3em] text-[#3e2f28]/40">
+                Synchronizing Archive...
+              </p>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* --- ヘッダー領域 --- */}
       <header className="fixed top-0 left-0 right-0 z-[100] bg-[#e8e2d2]/90 backdrop-blur-md px-4 sm:px-8 py-6 sm:py-10 flex items-center justify-between border-b border-[#3e2f28]/10 shadow-sm">
         <div className="flex flex-col gap-0.5">
@@ -111,7 +137,7 @@ export default function Home() {
                 strokeWidth={1.5}
               />
               <span className="absolute -bottom-4 left-1/2 -translate-x-1/2 text-[8px] font-bold opacity-0 group-hover:opacity-100 transition-opacity">
-                ADMIN
+                管理者
               </span>
             </button>
             <h1 className="text-lg sm:text-2xl font-bold tracking-tight italic whitespace-nowrap">
@@ -186,14 +212,14 @@ export default function Home() {
                   strokeWidth={1.5}
                 />
                 <span className="text-[11px] font-black uppercase tracking-[0.2em]">
-                  Entry
+                  入口
                 </span>
               </div>
             </div>
           </div>
 
           {/* 標本カード一覧 */}
-          <div className="space-y-60 relative z-20">
+          <div className="space-y-24 relative z-20">
             {badges.map((badge) => (
               <BadgeCard
                 key={badge.id}
@@ -232,7 +258,10 @@ export default function Home() {
         onClose={() => setShowFinalLog(false)}
         completionTime={completionTime}
         fullUserId={fullUserId}
+        displayId={displayId}
         badges={badges}
+        isExchanged={isExchanged}
+        onExchange={exchangePrize}
       />
 
       {/* 初回来場時の人数入力モーダル */}
@@ -303,7 +332,7 @@ export default function Home() {
                     onClick={() => router.push("/admin/login")}
                     className="text-[9px] font-bold text-[#3e2f28]/30 hover:text-[#3e2f28]/60 transition-colors uppercase tracking-[0.2em]"
                   >
-                    — Administrator Access —
+                    — 管理者用アクセス —
                   </button>
                 </div>
               </div>
@@ -313,7 +342,6 @@ export default function Home() {
       </AnimatePresence>
 
       <footer className="h-20" />
-      <span className="hidden">{completionTime}</span>
     </div>
   );
 }

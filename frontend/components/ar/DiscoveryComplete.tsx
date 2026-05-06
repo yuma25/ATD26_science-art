@@ -44,7 +44,7 @@ export const DiscoveryComplete = ({
       >
         <Check size={80} strokeWidth={3} />
         <div className="absolute -bottom-2 bg-white text-black px-4 py-1 text-[10px] font-black uppercase tracking-[0.3em] rotate-12">
-          Recorded
+          記録完了
         </div>
       </motion.div>
 
@@ -54,7 +54,7 @@ export const DiscoveryComplete = ({
           {badgeName}
         </h2>
         <p className="text-white/60 font-mono text-[10px] uppercase tracking-[0.5em]">
-          Discovery Complete
+          発見成功
         </p>
       </div>
 
@@ -64,7 +64,7 @@ export const DiscoveryComplete = ({
         transition={{ duration: 2, repeat: Infinity }}
         className="mt-12 text-white/40 font-mono text-[8px] uppercase tracking-widest"
       >
-        Tap to continue
+        タップして続ける
       </motion.div>
     </motion.div>
   );

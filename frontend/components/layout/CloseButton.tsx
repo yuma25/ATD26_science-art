@@ -28,24 +28,31 @@ export const CloseButton = ({ onClick, className = "" }: CloseButtonProps) => {
    * ハンドラー関数：ボタンクリック時の動作を決定します。
    */
   const handleClose = () => {
-    // 独自の処理が渡されている場合はそれを実行し、
-    // そうでない場合はブラウザの履歴を一つ戻します。
+    console.log("👆 CloseButton clicked");
+    // 独自の処理が渡されている場合はそれを実行
     if (onClick) {
       onClick();
       return;
     }
 
-    router.back();
+    // 履歴がある場合は戻り、そうでない場合はホームへ強制移動
+    if (window.history.length > 1) {
+      router.back();
+    } else {
+      router.push("/");
+    }
   };
 
   return (
     <button
       onClick={handleClose}
-      className={`fixed top-6 right-6 z-[200] w-12 h-12 flex items-center justify-center bg-[#e8e2d2]/80 backdrop-blur-md border border-[#3e2f28]/10 rounded-full text-[#3e2f28]/60 hover:text-[#3e2f28] hover:bg-[#e8e2d2] transition-all shadow-sm active:scale-90 ${className}`}
+      type="button"
+      className={`fixed top-4 right-4 sm:top-6 sm:right-6 z-[9999] w-12 h-12 flex items-center justify-center bg-[#e8e2d2] border-2 border-[#3e2f28]/30 rounded-full text-[#3e2f28] shadow-2xl active:scale-90 pointer-events-auto touch-manipulation cursor-pointer ${className}`}
+      style={{ WebkitTapHighlightColor: "transparent" }}
       aria-label="閉じる"
     >
       {/* Lucide의「X」アイコンを表示 */}
-      <X size={24} strokeWidth={1.5} />
+      <X size={26} strokeWidth={2.5} />
     </button>
   );
 };

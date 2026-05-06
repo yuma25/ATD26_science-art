@@ -39,40 +39,40 @@ export const supabaseAdmin =
  */
 export const signInAnonymously = async () => {
   try {
-    // 1. そもそもデータベースが準備できていない場合は何もしません（早期リターン）
-    if (!supabase) {
-      return null;
-    }
+    if (!supabase) return null;
 
-    // 2. すでにログインしているか（セッションがあるか）確認します
+    // 1. 現在のセッション取得を試みる
     const {
       data: { session },
+      error: sessionError,
     } = await supabase.auth.getSession();
-    let user: User | null | undefined = session?.user;
 
-    // 3. ログインしていない場合は、新しく「匿名ユーザー」としてサインインします
-    if (!user) {
-      console.log(
-        "🗝 ログイン情報が見つかりません。匿名サインインを開始します...",
+    // 💡 リフレッシュトークン異常などが発生している場合、強制的にログアウトしてクリア
+    if (sessionError) {
+      console.warn(
+        "🔄 セッションの不整合を検知しました。リセットします...",
+        sessionError.message,
       );
-      const { data, error } = await supabase.auth.signInAnonymously();
+      await supabase.auth.signOut();
+      const { data, error: retryError } =
+        await supabase.auth.signInAnonymously();
+      if (retryError) throw retryError;
+      return data.user;
+    }
 
-      // エラーが起きたら例外（catch）へ飛ばします
-      if (error) {
-        throw error;
-      }
+    let user: User | null = session?.user || null;
+
+    // 2. ログインしていない場合は、新しく「匿名ユーザー」としてサインイン
+    if (!user) {
+      console.log("🗝 匿名サインインを開始します...");
+      const { data, error: signInError } =
+        await supabase.auth.signInAnonymously();
+      if (signInError) throw signInError;
       user = data.user;
     }
 
-    // 4. 無事にユーザー情報が取得できたらそれを返します
-    if (user) {
-      return user;
-    }
-
-    // 5. どちらでもない場合は null を返します
-    return null;
-  } catch (error) {
-    // 何か問題が起きた場合はエラーログを出力します
+    return user || null;
+  } catch (error: unknown) {
     console.error("❌ 認証エラーが発生しました:", error);
     return null;
   }

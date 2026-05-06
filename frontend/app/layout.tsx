@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
+import Script from "next/script";
 
 /**
  * 【ルートレイアウト】
@@ -14,7 +15,7 @@ import "./globals.css";
  */
 export const metadata: Metadata = {
   title: "ATD26_SCIENCE-ART",
-  description: "Journal of AR & 3D Specimens",
+  description: "ARと3D標本のフィールドジャーナル",
   // iOSでのWebアプリ化（ホーム画面に追加）した際の設定
   appleWebApp: {
     capable: true,
@@ -48,6 +49,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="ja" data-scroll-behavior="smooth">
+      <head></head>
       <body className="antialiased">
         {/* 1. 各ページの内容をここに流し込みます */}
         {children}

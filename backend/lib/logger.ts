@@ -4,6 +4,17 @@
  */
 export const Logger = {
   /**
+   * 現在時刻を日本時間 (JST) の ISO 形式で取得
+   */
+  getJSTTimestamp() {
+    const now = new Date();
+    const offset = 9 * 60 * 60 * 1000;
+    return new Date(now.getTime() + offset)
+      .toISOString()
+      .replace("Z", "+09:00");
+  },
+
+  /**
    * info: 一般的な情報の記録
    * 正常な動作（ページの閲覧、データの保存など）を記録します。
    * @param action - 何が起きたかを示す識別子（例: "PAGE_VIEW"）
@@ -13,7 +24,7 @@ export const Logger = {
     console.log(
       JSON.stringify({
         level: "INFO",
-        timestamp: new Date().toISOString(),
+        timestamp: this.getJSTTimestamp(),
         action,
         ...details,
       }),
@@ -31,7 +42,7 @@ export const Logger = {
     console.error(
       JSON.stringify({
         level: "ERROR",
-        timestamp: new Date().toISOString(),
+        timestamp: this.getJSTTimestamp(),
         action,
         error: error instanceof Error ? error.message : String(error),
         ...details,

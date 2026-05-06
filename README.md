@@ -1,6 +1,6 @@
 # ATD26_science-art
 
-AR（拡張現実）技術を用いた標本収集・管理アプリケーション。実世界の画像認識を通じて3Dモデルを取得し、ユーザーごとの取得履歴を永続化します。
+AR（拡張現実）技術を用いた絵画コレクション・管理アプリケーション。実世界の画像認識を通じて3D作品を発見し、獲得した作品のデジタル図録（2D画像）をユーザーごとに永続化します。
 
 ---
 
@@ -8,23 +8,26 @@ AR（拡張現実）技術を用いた標本収集・管理アプリケーショ
 
 ### Frontend / Core
 
-- **Framework**: Next.js 16 (App Router)
+- **Framework**: Next.js 16 (App Router / Turbopack)
 - **Language**: TypeScript
 - **Styling**: Tailwind CSS v4, Framer Motion
 - **AR Engine**: MindAR.js (Web-based Image Tracking), A-Frame
+- **Data Fetching**: SWR (Stale-While-Revalidate) - 画面遷移時の高速表示とキャッシュ管理を実現
 
 ### Backend / Infrastructure
 
 - **BaaS**: Supabase (PostgreSQL / Auth / Storage)
-- **Cache**: Redis (Upstash) - 統計データの高速集計に使用
+- **Cache**: Redis (Upstash) - 統計データの高速集計、レートリミットに使用
 - **Data Validation**: Zod
-- **Data Fetching**: SWR (Stale-While-Revalidate)
 
 ### Development / Quality
 
 - **Linter/Formatter**: ESLint, Prettier
 - **Testing**: Vitest
 - **Commit**: Commitlint, Lefthook (Pre-commit hook)
+
+> [!TIP]
+> 本プロジェクトは Vercel や Supabase の無料枠を最大限活用し、低コストで運用できるよう最適化されています。詳細は [アーキテクチャ設計書](./docs/ARCHITECTURE.md#6-運用コストとスケーラビリティ) を参照してください。
 
 ---
 
@@ -34,6 +37,8 @@ AR（拡張現実）技術を用いた標本収集・管理アプリケーショ
 
 - [🏛️ アーキテクチャ設計書](./docs/ARCHITECTURE.md)
   - 3層構造、レンダリング戦略、キャッシュフロー、技術選定根拠
+- [🦋 標本レンダリング設定仕様書](./docs/SPECIMENS.md)
+  - 標本ごとの 3D 設定、シーン別演出ロジック、追加手順
 - [🔌 API・サービス仕様書](./docs/API.md)
   - 標準レスポンス、認証、エラーコード、冪等性設計
 - [🗄️ データベース設計書](./docs/DATABASE.md)

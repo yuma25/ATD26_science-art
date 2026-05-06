@@ -1,195 +1,76 @@
 "use client";
 
-import React, { useEffect, useState, Suspense } from "react";
+import React, { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
-import Script from "next/script";
-import { Move } from "lucide-react";
 import { CloseButton } from "../../components/layout/CloseButton";
 
 /**
- * 【標本詳細ビューワー】
- * 3Dモデルを単体で詳細に観察するための画面です。
- * Google の <model-viewer> を使用して、高品質なレンダリングと
- * 簡易的なAR配置機能を提供します。
+ * 【作品詳細ビューワー】
+ * 獲得した絵画作品を 2D 画像で詳細に鑑賞するための画面です。
+ * 3D モデルではなく、実際の絵画の画像を表示します。
  */
 
-/**
- * model-viewer のためのプロパティ定義
- * 各プロパティが何を制御するかを説明します。
- */
-interface ModelViewerProps extends React.HTMLAttributes<HTMLElement> {
-  src?: string; // 3Dモデル（GLBファイル）のパス
-  ar?: boolean; // AR機能を有効にするか
-  "ar-modes"?: string; // ARの起動モード（WebXR, Scene Viewer, Quick Look）
-  "camera-controls"?: boolean; // カメラ操作（回転・ズーム）を許可するか
-  "auto-rotate"?: boolean; // 自動回転を有効にするか
-  "shadow-intensity"?: string; // 影の強さ
-  "environment-image"?: string; // ライティングに使用する環境画像
-  exposure?: string; // 露出（明るさ）
-  poster?: string; // モデル読み込み中に表示する画像
-}
-
-/**
- * 型安全な model-viewer コンポーネント
- * React.createElement を使用することで JSX のパースエラーを確実に回避します。
- */
-const ModelViewer = (props: ModelViewerProps) => {
-  return React.createElement("model-viewer", props);
-};
-
-function ModelViewerContent() {
+function ViewerContent() {
   const searchParams = useSearchParams();
 
-  // URLパラメータから表示するモデルの情報を取得します
-  const modelUrl = searchParams.get("model") || "/butterfly.glb";
-  const name = searchParams.get("name") || "標本";
-
-  const [mounted, setMounted] = useState(false);
-
-  // マウント後の処理（クライアントサイドのみで実行）
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setMounted(true);
-  }, []);
-
-  // 1. マウントされるまでは何も表示しません（ハイドレーションエラー防止）
-  if (!mounted) return null;
+  // URLパラメータから情報を取得
+  const imageUrl =
+    searchParams.get("image") || "/images/paintings/painting_0.jpg";
+  const name = searchParams.get("name") || "作品";
 
   return (
-    <div
-      style={{
-        margin: 0,
-        backgroundColor: "#f8fafc",
-        height: "100vh",
-        width: "100vw",
-        position: "fixed",
-      }}
-    >
-      {/* 2. <model-viewer> ライブラリを読み込みます */}
-      <Script
-        type="module"
-        src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.5.0/model-viewer.min.js"
-      />
+    <div className="fixed inset-0 bg-[#1a1512] flex flex-col items-center justify-center overflow-hidden">
+      {/* 1. 背景の装飾（ギャラリーのような雰囲気） */}
+      <div className="absolute inset-0 opacity-20 pointer-events-none bg-[radial-gradient(circle_at_50%_50%,#3e2f28,transparent)]" />
 
-      {/* 3. ヘッダー UI（標本名を表示） */}
-      <div
-        style={{
-          position: "absolute",
-          top: 0,
-          left: 0,
-          right: 0,
-          zIndex: 100,
-          padding: "20px",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-        }}
-      >
-        <h1
-          style={{
-            margin: 0,
-            fontSize: "14px",
-            fontWeight: "900",
-            textTransform: "uppercase",
-            letterSpacing: "0.1em",
-            color: "#3e2f28",
-          }}
-        >
-          {name}
-        </h1>
+      {/* 2. ヘッダー UI */}
+      <div className="absolute top-0 left-0 right-0 z-50 p-8 flex justify-center">
+        <div className="text-center space-y-1">
+          <h1 className="text-white/90 text-sm font-black uppercase tracking-[0.3em] italic">
+            {name}
+          </h1>
+          <div className="h-[1px] w-12 bg-amber-400/50 mx-auto" />
+        </div>
       </div>
 
       {/* 閉じるボタン */}
       <CloseButton />
 
-      {/* 4. メイン 3D/AR ビューワーの配置 */}
-      <ModelViewer
-        src={modelUrl}
-        ar
-        ar-modes="webxr scene-viewer quick-look"
-        camera-controls
-        auto-rotate
-        shadow-intensity="1"
-        environment-image="neutral"
-        exposure="1.2"
-        style={{ width: "100%", height: "100%" }}
-      >
-        {/* AR 起動ボタンのカスタマイズ */}
-        <button
-          slot="ar-button"
-          style={{
-            position: "absolute",
-            bottom: "40px",
-            left: "50%",
-            transform: "translateX(-50%)",
-            padding: "16px 40px",
-            backgroundColor: "#000",
-            color: "#fff",
-            border: "none",
-            borderRadius: "50px",
-            fontWeight: "bold",
-            fontSize: "14px",
-            boxShadow: "0 10px 30px rgba(0,0,0,0.3)",
-            display: "flex",
-            alignItems: "center",
-            gap: "10px",
-          }}
-        >
-          <Move size={20} /> 空間に配置する
-        </button>
+      {/* 3. メイン画像表示（豪華な額縁演出） */}
+      <div className="relative z-10 p-2 sm:p-4 bg-gradient-to-br from-[#d4af37] via-[#f9e4b7] to-[#8c6d31] shadow-[0_50px_100px_-20px_rgba(0,0,0,1)] border border-[#b8860b]/30">
+        {/* 外枠の装飾ライン */}
+        <div className="absolute inset-2 border border-[#8c6d31]/50 pointer-events-none" />
 
-        {/* 読み込み中のプレビュー（ポスター） */}
-        <div
-          slot="poster"
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            height: "100%",
-            color: "#94a3b8",
-            fontSize: "12px",
-            fontWeight: "bold",
-            letterSpacing: "0.2em",
-          }}
-        >
-          INITIALIZING 3D SPECIMEN...
+        {/* 内側のダークフレーム（木枠） */}
+        <div className="relative p-1 bg-[#1a120f] shadow-2xl">
+          {/* 作品を引き立てる白のマット（パスマルテュ） */}
+          <div className="bg-[#f2f2f2] p-4 sm:p-10 shadow-[inset_0_0_40px_rgba(0,0,0,0.2)] border border-[#d1d1d1]">
+            <div className="relative bg-white shadow-[0_0_2px_rgba(0,0,0,0.5)]">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={imageUrl}
+                alt={name}
+                className="max-w-[75vw] max-h-[55vh] object-contain block"
+              />
+
+              {/* 画像へのわずかな落ち影とガラスの反射風演出 */}
+              <div className="absolute inset-0 pointer-events-none shadow-[inset_0_5px_15px_rgba(0,0,0,0.1)] bg-gradient-to-tr from-transparent via-white/5 to-white/10" />
+            </div>
+          </div>
         </div>
-      </ModelViewer>
 
-      {/* 5. 操作ガイドのオーバーレイ */}
-      <div
-        style={{
-          position: "absolute",
-          bottom: "110px",
-          left: 0,
-          right: 0,
-          textAlign: "center",
-          pointerEvents: "none",
-        }}
-      >
-        <p
-          style={{
-            display: "inline-block",
-            backgroundColor: "rgba(0,0,0,0.6)",
-            color: "#fff",
-            padding: "8px 20px",
-            borderRadius: "20px",
-            fontSize: "11px",
-            fontWeight: "bold",
-            backdropFilter: "blur(5px)",
-          }}
-        >
-          ピンチで拡大、ドラッグで回転
-        </p>
+        {/* 額縁全体の光沢・質感演出 */}
+        <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(circle_at_20%_20%,rgba(255,255,255,0.15),transparent)] mix-blend-overlay" />
+        <div className="absolute inset-0 pointer-events-none border-[0.5px] border-white/20" />
       </div>
     </div>
   );
 }
 
-export default function ModelViewerPage() {
+export default function ViewerPage() {
   return (
-    <Suspense fallback={null}>
-      <ModelViewerContent />
+    <Suspense fallback={<div className="fixed inset-0 bg-[#1a1512]" />}>
+      <ViewerContent />
     </Suspense>
   );
 }
