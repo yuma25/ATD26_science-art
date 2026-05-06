@@ -37,7 +37,6 @@
   },
   "dependencies": {
     "@app/backend": "workspace:*",
-    "@google/model-viewer": "^4.2.0",
     "@react-three/drei": "^10.7.7",
     "@react-three/fiber": "^9.6.0",
     "@supabase/supabase-js": "^2.40.0",

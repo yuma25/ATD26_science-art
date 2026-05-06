@@ -12,6 +12,7 @@ import {
   Users,
 } from "lucide-react";
 import { useHome } from "@/hooks/useHome";
+import { Badge } from "@backend/types";
 import { BadgeCard } from "@/components/BadgeCard";
 import { calculateProgress } from "@backend/lib/logic";
 import { useScrollManager } from "@/hooks/useScrollManager";
@@ -29,12 +30,13 @@ export default function Home() {
   const {
     badges, // 標本データの一覧
     syncing, // 同期中フラグ
+    initialLoading, // 💡 初回ロード中フラグ
     fullUserId, // 内部処理用ID
     displayId, // 💡 表示用ID
     partySize, // 来場人数
     showPartyInput, // 人数入力モーダルの表示フラグ
     cameraPermission, // カメラ権限の状態
-    isAcquired, // 指定したIDের標本獲得済みか判定する関数
+    isAcquired, // 指定したIDの標本獲得済みか判定する関数
     requestCameraPermission, // カメラ権限をリクエストする関数
     updatePartySize, // 人数を更新する関数
   } = useHome();
@@ -47,7 +49,7 @@ export default function Home() {
 
   // --- 進捗状況の計算 ---
   // 1. 獲得済みの標本数をカウントします
-  const acquiredCount = badges.filter((b) => isAcquired(b.id)).length;
+  const acquiredCount = badges.filter((b: Badge) => isAcquired(b.id)).length;
   // 2. すべての標本を集めたか判定します
   const isComplete = badges.length > 0 && acquiredCount === badges.length;
   // 3. 進捗率（0-100%）を計算します
@@ -66,16 +68,16 @@ export default function Home() {
   }, [isComplete]);
 
   // --- ライフサイクル処理 ---
-  // マウント時や同期完了時にスクロール位置を復元します
+  // マウント時や初回ロード完了時にスクロール位置を復元します
   useEffect(() => {
-    // 同期が完了し、データが存在する場合に実行
-    if (!syncing && badges.length > 0) {
+    // 初回ロードが完了し、データが存在する場合に実行
+    if (!initialLoading && badges.length > 0) {
       const timer = setTimeout(() => {
         restoreScroll();
       }, 100);
       return () => clearTimeout(timer);
     }
-  }, [syncing, badges, restoreScroll]);
+  }, [initialLoading, badges, restoreScroll]);
 
   // --- ユーザーアクション ---
   /**
@@ -95,6 +97,28 @@ export default function Home() {
 
   return (
     <div className="min-h-screen font-serif selection:bg-[#d4c5a9] text-[#3e2f28] flex flex-col relative">
+      {/* 💡 初回ロード中のオーバーレイ（データが空の場合のみ） */}
+      <AnimatePresence>
+        {initialLoading && badges.length === 0 && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[500] bg-[#e8e2d2] flex items-center justify-center"
+          >
+            <div className="flex flex-col items-center gap-4">
+              <RefreshCcw
+                size={32}
+                className="animate-spin text-[#3e2f28]/40"
+              />
+              <p className="text-[10px] font-black uppercase tracking-[0.3em] text-[#3e2f28]/40">
+                Synchronizing Archive...
+              </p>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* --- ヘッダー領域 --- */}
       <header className="fixed top-0 left-0 right-0 z-[100] bg-[#e8e2d2]/90 backdrop-blur-md px-4 sm:px-8 py-6 sm:py-10 flex items-center justify-between border-b border-[#3e2f28]/10 shadow-sm">
         <div className="flex flex-col gap-0.5">

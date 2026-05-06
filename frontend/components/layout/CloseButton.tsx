@@ -41,11 +41,11 @@ export const CloseButton = ({ onClick, className = "" }: CloseButtonProps) => {
   return (
     <button
       onClick={handleClose}
-      className={`fixed top-6 right-6 z-[200] w-12 h-12 flex items-center justify-center bg-[#e8e2d2]/80 backdrop-blur-md border border-[#3e2f28]/10 rounded-full text-[#3e2f28]/60 hover:text-[#3e2f28] hover:bg-[#e8e2d2] transition-all shadow-sm active:scale-90 ${className}`}
+      className={`fixed top-4 right-4 sm:top-6 sm:right-6 z-[9999] w-12 h-12 flex items-center justify-center bg-[#e8e2d2]/90 backdrop-blur-md border-2 border-[#3e2f28]/20 rounded-full text-[#3e2f28] hover:bg-[#e8e2d2] transition-all shadow-xl active:scale-75 pointer-events-auto touch-manipulation ${className}`}
       aria-label="閉じる"
     >
       {/* Lucide의「X」アイコンを表示 */}
-      <X size={24} strokeWidth={1.5} />
+      <X size={26} strokeWidth={2.5} />
     </button>
   );
 };

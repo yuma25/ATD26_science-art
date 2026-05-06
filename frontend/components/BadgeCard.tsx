@@ -47,7 +47,7 @@ export const BadgeCard = ({
     if (locked) return;
     if (onSaveScroll) onSaveScroll();
     router.push(
-      `/viewer?model=${encodeURIComponent(badge.model_url)}&name=${encodeURIComponent(badge.name)}`,
+      `/viewer?image=${encodeURIComponent(badge.image_url)}&name=${encodeURIComponent(badge.name)}`,
     );
   };
 

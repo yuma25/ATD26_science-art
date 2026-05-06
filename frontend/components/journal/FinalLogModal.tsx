@@ -37,78 +37,88 @@ export const FinalLogModal = ({
 }: FinalLogModalProps) => {
   return (
     <AnimatePresence>
-      {/* 
-        show が false の場合は AnimatePresence によって
-        フェードアウトアニメーションを伴って消えます。
-      */}
       {show && (
-        <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4 sm:p-12">
+        <div className="fixed inset-0 z-[2000] flex items-center justify-center p-2 sm:p-12">
           {/* 背景のオーバーレイ */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="fixed inset-0 bg-[#3e2f28]/90 backdrop-blur-xl no-print"
+            className="fixed inset-0 bg-[#1a1512]/95 backdrop-blur-md no-print"
           />
 
-          {/* 記念証本体（カード部分） */}
+          {/* 記念証本体（1行に凝縮したデザイン） */}
           <motion.div
-            initial={{ scale: 0.9, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0.9, opacity: 0 }}
-            className="relative w-full max-w-lg bg-[#fdfaf2] p-10 sm:p-16 border-[2px] border-[#3e2f28] shadow-[30px_30px_0_rgba(0,0,0,0.2)] text-center my-auto"
-            onClick={(e) => e.stopPropagation()} // カード部分のクリックで閉じないようにする
+            initial={{ y: 50, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: 50, opacity: 0 }}
+            className="relative w-full max-w-2xl bg-[#fdfaf2] border-[2px] border-[#3e2f28] shadow-[20px_20px_0_rgba(0,0,0,0.4)] overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
           >
-            <div className="relative z-10 space-y-12">
-              {/* ヘッダーエリア：勲章アイコンとタイトル */}
-              <div className="border-b-2 border-[#3e2f28] pb-10">
-                <Award
-                  size={64}
-                  className="mx-auto text-[#3e2f28] mb-6"
-                  strokeWidth={1}
-                />
-                <h2 className="text-5xl font-black italic text-[#3e2f28] tracking-tighter">
-                  FINAL LOG.
-                </h2>
+            {/* 装飾用の端切れ演出 */}
+            <div className="absolute top-0 left-0 w-2 h-full bg-[#3e2f28]/10 border-r border-[#3e2f28]/5" />
+
+            <div className="p-4 sm:p-8 flex flex-col sm:flex-row items-center justify-between gap-6 sm:gap-10">
+              {/* 1. タイトルとアイコン（左側 / モバイルでは上） */}
+              <div className="flex items-center gap-4 border-b sm:border-b-0 sm:border-r border-[#3e2f28]/10 pb-4 sm:pb-0 sm:pr-8">
+                <div className="w-12 h-12 bg-[#3e2f28] text-[#fdfaf2] rounded-full flex items-center justify-center flex-shrink-0">
+                  <Award size={24} strokeWidth={2} />
+                </div>
+                <div>
+                  <h2 className="text-xl font-black italic tracking-tighter text-[#3e2f28]">
+                    FINAL LOG.
+                  </h2>
+                  <p className="text-[7px] font-bold uppercase tracking-[0.3em] text-[#3e2f28]/40">
+                    Complete Archive
+                  </p>
+                </div>
               </div>
 
-              {/* 内容エリア：達成メッセージ、日時、ユーザーID */}
-              <div className="space-y-8 py-4 text-[#3e2f28]">
-                <div className="space-y-1">
-                  <p className="text-xl font-bold italic">全標本の記録完了</p>
-                  {/* 発見した標本数を示すインジケーターバー */}
-                  <div className="flex justify-center gap-1.5 mt-3">
-                    {badges.map((_, i) => (
-                      <div key={i} className="w-6 h-1 bg-[#3e2f28]/40" />
-                    ))}
-                  </div>
-                </div>
-
-                {/* 完了時刻の刻印 */}
-                <div className="space-y-1">
-                  <p className="font-mono text-xs font-black">
+              {/* 2. ログ詳細（中央 / 1行に情報を集約） */}
+              <div className="flex-1 flex flex-col sm:flex-row items-center gap-4 sm:gap-12 text-center sm:text-left">
+                <div className="space-y-0.5">
+                  <p className="text-[9px] font-black uppercase text-[#3e2f28]/30">
+                    Timestamp
+                  </p>
+                  <p className="font-mono text-[10px] font-black text-[#3e2f28]">
                     {completionTime}
                   </p>
                 </div>
 
-                {/* ユーザーID（デジタル署名のような扱い） */}
-                <div className="space-y-1 pt-4">
-                  <p className="font-mono text-[9px] font-bold opacity-60 px-8 break-all leading-tight">
+                <div className="space-y-0.5 max-w-[150px] overflow-hidden">
+                  <p className="text-[9px] font-black uppercase text-[#3e2f28]/30">
+                    Explorer ID
+                  </p>
+                  <p className="font-mono text-[8px] font-bold text-[#3e2f28] truncate">
                     {fullUserId}
                   </p>
                 </div>
+
+                <div className="space-y-1">
+                  <div className="flex gap-1">
+                    {badges.map((_, i) => (
+                      <div
+                        key={i}
+                        className="w-2 h-2 rounded-full bg-amber-400"
+                      />
+                    ))}
+                  </div>
+                </div>
               </div>
 
-              {/* フッター：閉じるボタン */}
-              <div className="pt-10 border-t border-[#3e2f28]/10">
-                <button
-                  onClick={onClose}
-                  className="w-full py-4 bg-[#3e2f28] text-[#fdfaf2] text-[10px] font-black uppercase tracking-widest hover:bg-[#000] transition-all shadow-xl"
-                >
-                  戻る
-                </button>
-              </div>
+              {/* 3. 閉じる（右側 / モバイルでは下） */}
+              <button
+                onClick={onClose}
+                className="w-full sm:w-auto px-10 py-3 bg-[#3e2f28] text-[#fdfaf2] text-[9px] font-black uppercase tracking-widest hover:bg-black transition-colors shadow-lg active:scale-95"
+              >
+                Close
+              </button>
+            </div>
+
+            {/* 下部の透かし装飾 */}
+            <div className="absolute bottom-0 right-0 opacity-[0.03] pointer-events-none -mb-4 -mr-4">
+              <Award size={120} />
             </div>
           </motion.div>
         </div>

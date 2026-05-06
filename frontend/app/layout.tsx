@@ -49,19 +49,8 @@ export default function RootLayout({
 }) {
   return (
     <html lang="ja" data-scroll-behavior="smooth">
+      <head></head>
       <body className="antialiased">
-        {/* Meshopt デコーダー: 圧縮された3Dモデルを解凍するために必要 */}
-        <Script
-          id="meshopt-decoder"
-          src="https://unpkg.com/meshoptimizer@0.21.0/meshopt_decoder.js"
-          strategy="beforeInteractive"
-        />
-        {/* model-viewer - 詳細表示用 */}
-        <Script
-          type="module"
-          src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.5.0/model-viewer.min.js"
-          strategy="afterInteractive"
-        />
         {/* 1. 各ページの内容をここに流し込みます */}
         {children}
       </body>

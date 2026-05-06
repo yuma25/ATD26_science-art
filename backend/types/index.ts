@@ -14,7 +14,11 @@ export const BadgeSchema = z.object({
   model_url: z
     .string()
     .url("有効なURLを入力してください")
-    .or(z.string().regex(/^\/.*$/, "相対パスは / から始めてください")), // モデルのパス
+    .or(z.string().regex(/^\/.*$/, "相対パスは / から始めてください")), // 3Dモデルのパス
+  image_url: z
+    .string()
+    .url("有効なURLを入力してください")
+    .or(z.string().regex(/^\/.*$/, "相対パスは / から始めてください")), // 絵画画像のパス
   target_index: z.number().int().min(0), // ARマーカーの番号
   created_at: z.string().optional(), // 登録日時（DB形式の差異を許容）
 });

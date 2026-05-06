@@ -75,7 +75,7 @@ export default function ARPage() {
         await loadScript(
           "https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js",
         );
-        // 3. デコーダー (Meshopt & Draco)
+        // 3. デコーダーの読み込み
         await loadScript(
           "https://unpkg.com/meshoptimizer@0.21.0/meshopt_decoder.js",
         );
@@ -84,19 +84,22 @@ export default function ARPage() {
         );
 
         // --- デコーダーの強制注入パッチ ---
-        const AFRAME = (window as any).AFRAME;
-        const MeshoptDecoder = (window as any).MeshoptDecoder;
+        const win = window as any;
+        const AFRAME = win.AFRAME;
 
         if (AFRAME && AFRAME.THREE) {
           const THREE = AFRAME.THREE;
-          if (MeshoptDecoder && MeshoptDecoder.ready)
-            await MeshoptDecoder.ready;
+
+          // Meshopt デコーダーの準備
+          let readyDecoder = win.MeshoptDecoder;
+          if (typeof readyDecoder === "function")
+            readyDecoder = await readyDecoder();
+          if (readyDecoder && readyDecoder.ready) await readyDecoder.ready;
 
           if (THREE.GLTFLoader) {
-            // パッチ: ローダーが生成された瞬間にデコーダーを叩き込む
             const patchLoader = (loader: any) => {
-              if (MeshoptDecoder) loader.setMeshoptDecoder(MeshoptDecoder);
-              if ((window as any).DracoDecoder) {
+              if (readyDecoder) loader.setMeshoptDecoder(readyDecoder);
+              if ((THREE as any).DRACOLoader) {
                 const dracoLoader = new (THREE as any).DRACOLoader();
                 dracoLoader.setDecoderPath(
                   "https://www.gstatic.com/draco/versioned/decoders/1.5.6/",
@@ -105,21 +108,14 @@ export default function ARPage() {
               }
             };
 
-            const _load = THREE.GLTFLoader.prototype.load;
+            const originalLoad = THREE.GLTFLoader.prototype.load;
             THREE.GLTFLoader.prototype.load = function (...args: any[]) {
               patchLoader(this);
-              return _load.apply(this, args);
+              return originalLoad.apply(this, args);
             };
 
-            const _parse = THREE.GLTFLoader.prototype.parse;
-            THREE.GLTFLoader.prototype.parse = function (...args: any[]) {
-              patchLoader(this);
-              return _parse.apply(this, args);
-            };
-
-            // 静的登録
-            if (THREE.GLTFLoader.setMeshoptDecoder) {
-              THREE.GLTFLoader.setMeshoptDecoder(MeshoptDecoder);
+            if (typeof THREE.GLTFLoader.setMeshoptDecoder === "function") {
+              THREE.GLTFLoader.setMeshoptDecoder(readyDecoder);
             }
           }
         }
@@ -205,7 +201,7 @@ export default function ARPage() {
             return `
             <a-entity mindar-image-target="targetIndex: ${physicalIndex}">
               <a-entity id="model-container-${physicalIndex}" visible="false">
-                <a-entity animation="${settings.outerAnimation}">
+                  <a-entity animation="${settings.outerAnimation}">
                   <a-entity animation="${settings.innerAnimation}">
                     <a-gltf-model 
                       class="ar-model"
@@ -214,7 +210,7 @@ export default function ARPage() {
                       scale="${settings.scale}" 
                       position="${pos}"
                       rotation="${rot}"
-                      animation-mixer="${mixer}"
+                      animation-mixer="${settings.animationMixer || "clip: *; loop: repeat;"}"
                       data-min-scale="${settings.minScale}"
                       data-max-scale="${settings.maxScale}"
                     ></a-gltf-model>
