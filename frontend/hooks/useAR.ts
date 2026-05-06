@@ -306,32 +306,48 @@ export const useAR = () => {
           }
         }
 
-        // 4. 画像としてダウンロード
-        const dataUrl = canvas.toDataURL("image/jpeg", 0.9);
-        const link = document.createElement("a");
-        const timestamp =
-          new Date()
-            .toLocaleDateString("ja-JP", {
-              year: "numeric",
-              month: "2-digit",
-              day: "2-digit",
-            })
-            .replace(/\//g, "-") +
-          "_" +
-          new Date()
-            .toLocaleTimeString("ja-JP", {
-              hour12: false,
-              hour: "2-digit",
-              minute: "2-digit",
-              second: "2-digit",
-            })
-            .replace(/:/g, "-");
+        // 4. 保存または共有処理
+        const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
+        const fileName = `specimen-${timestamp}.jpg`;
 
-        link.download = `specimen-${timestamp}.jpg`;
-        link.href = dataUrl;
-        link.click();
+        // Canvas を Blob に変換
+        canvas.toBlob(
+          async (blob) => {
+            if (!blob) return;
 
-        console.log("📸 写真を保存しました:", link.download);
+            // 共有機能（Web Share API）が使えるか確認
+            const file = new File([blob], fileName, { type: "image/jpeg" });
+            if (
+              navigator.share &&
+              navigator.canShare &&
+              navigator.canShare({ files: [file] })
+            ) {
+              try {
+                await navigator.share({
+                  files: [file],
+                  title: "標本の観察記録",
+                  text: "ARで標本を撮影しました！",
+                });
+                console.log("📸 共有メニューを表示しました");
+              } catch (shareError) {
+                // ユーザーがキャンセルした場合は何もしない
+                if ((shareError as Error).name !== "AbortError") {
+                  console.error("🚫 共有に失敗しました:", shareError);
+                }
+              }
+            } else {
+              // フォールバック: 従来のダウンロード方式
+              const dataUrl = canvas.toDataURL("image/jpeg", 0.9);
+              const link = document.createElement("a");
+              link.download = fileName;
+              link.href = dataUrl;
+              link.click();
+              console.log("📸 写真をダウンロードしました:", fileName);
+            }
+          },
+          "image/jpeg",
+          0.9,
+        );
       } catch (e) {
         console.error("🚫 キャプチャの保存に失敗しました:", e);
       }
