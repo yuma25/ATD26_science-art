@@ -183,8 +183,8 @@ export default function ARPage() {
         <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
 
         <!-- 物理ベースライティングへの対応 -->
-        <a-light type="ambient" intensity="0.5"></a-light>
-        <a-light type="directional" intensity="0.8" position="1 2 1"></a-light>
+        <a-light type="ambient" intensity="0.2"></a-light>
+        <a-light type="directional" intensity="0.4" position="1 2 1"></a-light>
 
         ${allBadges
           .map((badge) => {
@@ -214,6 +214,15 @@ export default function ARPage() {
                       data-min-scale="${settings.minScale}"
                       data-max-scale="${settings.maxScale}"
                     ></a-gltf-model>
+                    ${
+                      badge.name === "ヤドカリ"
+                        ? `
+                        <!-- ヤドカリ専用の追従ライト（さらに強化） -->
+                        <a-light type="point" intensity="2.5" distance="15" position="0 3 0"></a-light>
+                        <a-light type="spot" intensity="2.0" position="0 6 0" rotation="-90 0 0"></a-light>
+                      `
+                        : ""
+                    }
                   </a-entity>
                 </a-entity>
               </a-entity>
