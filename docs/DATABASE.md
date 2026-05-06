@@ -4,6 +4,8 @@
 
 すべてのデータは Supabase (PostgreSQL) によって管理され、タイムスタンプは日本時間 (JST) で処理・格納されます。PostgreSQLのデフォルト値およびトリガーにより、挿入・更新時に自動的に `now() + interval '9 hours'` がセットされます。
 
+実際のテーブル構築用 SQL や初期データの投入スクリプトについては、[DATABASE_SQL.md](./DATABASE_SQL.md) を参照してください。
+
 ---
 
 ## 1. テーブル: `badges`
