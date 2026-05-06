@@ -52,8 +52,13 @@
 
 ### レートリミティング
 
-- **API レベル**: 過剰なリクエストからデータベースを保護。
+- **API レベル**: Upstash Redis を使用したスライディングウィンドウ方式のレートリミットを推奨（将来的な拡張予定）。
 - **CORS**: 同一オリジンからのリクエストのみを許可。
+
+### キャッシュ戦略 (Cache-Control)
+
+- **静的マスターデータ (`/api/v1/badges`)**: `s-maxage=3600, stale-while-revalidate` を設定し、エッジキャッシュを有効化。
+- **動的データ (`/api/v1/admin/stats`)**: Redis によるサーバーサイドキャッシュ（5分）に加え、ブラウザ側での短期キャッシュを許容。
 
 ### セッション管理
 
@@ -70,7 +75,16 @@
 ### `POST /api/v1/badges/acquire`
 
 - 新しいバッジの獲得を記録。
-- **冪等性**: 重複リクエスト時は 200 OK と `ALREADY_ACQUIRED` フラグを返却。
+- **リクエストボディ**:
+  ```json
+  {
+    "badge_id": "uuid-string"
+  }
+  ```
+- **レスポンス (200 OK)**:
+  - 新規獲得時: `{ "success": true, "data": { "acquired": true } }`
+  - 獲得済み時: `{ "success": true, "data": { "acquired": false, "message": "ALREADY_ACQUIRED" } }`
+- **冪等性**: 重複リクエスト時はエラーを返さず、獲得済みフラグと共に成功を返却します。
 
 ### `GET /api/v1/admin/stats`
 
