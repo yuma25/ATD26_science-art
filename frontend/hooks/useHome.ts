@@ -125,6 +125,19 @@ export const useHome = () => {
     return () => subscription.unsubscribe();
   }, [mutateSession, mutateAcquired, mutateProfile]);
 
+  /**
+   * --- 初期化処理 ---
+   */
+  useEffect(() => {
+    // 初回アクセス時に匿名サインインを実行し、セッションを確保します。
+    // これにより、来場人数入力モーダルが初回訪問時でも正しく表示されるようになります。
+    const init = async () => {
+      await signInAnonymously();
+      void mutateSession();
+    };
+    init();
+  }, [mutateSession]);
+
   return {
     badges: sortedBadges,
     acquiredBadgeIds,
