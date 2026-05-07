@@ -1,10 +1,10 @@
 import { SpecimenSettings } from "./types";
 
 export const moonJelly: SpecimenSettings = {
-  // モデルの大きさ（絵画との調和を優先してさらに縮小）
-  scale: "2.8 2.8 2.8",
-  // モデルの重心補正（絵画の下方から現れる）
-  position: "0 -1.5 0.3",
+  // モデルの大きさ（手のひらサイズ）
+  scale: "1.0 1.0 1.0",
+  // モデルの重心補正（絵画の表面に密着）
+  position: "0 -0.5 0.01",
   // モデルの向き
   rotation: "0 0 0",
   // 全体の回転アニメーション
@@ -12,8 +12,8 @@ export const moonJelly: SpecimenSettings = {
     "property: rotation; to: 0 360 0; dur: 60000; easing: linear; loop: true",
   // モデル自体の浮遊・揺れアニメーション
   innerAnimation:
-    "property: position; to: 0.3 0.7 1.0; dur: 5000; easing: easeInOutSine; dir: alternate; loop: true",
+    "property: position; to: 0.05 0.1 0.1; dur: 5000; easing: easeInOutSine; dir: alternate; loop: true",
   // AR空間でのピンチ操作による最小・最大サイズ制限
-  minScale: 0.3,
-  maxScale: 7.0,
+  minScale: 0.1,
+  maxScale: 3.0,
 };

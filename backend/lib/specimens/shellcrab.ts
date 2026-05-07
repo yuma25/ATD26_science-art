@@ -1,17 +1,17 @@
 import { SpecimenSettings } from "./types";
 
 export const shellcrab: SpecimenSettings = {
-  // モデルの大きさ（絵画との調和を優先してさらに縮小）
-  scale: "3.5 3.5 3.5",
+  // モデルの大きさ（手のひらサイズ）
+  scale: "1.2 1.2 1.2",
   // モデルの向き
   rotation: "0 0 0",
   // 全体の回転アニメーション（停止）
   outerAnimation: "",
   // モデル自体の浮遊・揺れアニメーション
-  // 絵画の表面付近を移動
+  // 絵画の表面（Z軸 0.01）にほぼ密着
   innerAnimation:
-    "property: position; to: 0.3 0.1 0.3; dur: 3000; easing: easeInOutSine; dir: alternate; loop: true",
+    "property: position; to: 0.05 0.02 0.05; dur: 3000; easing: easeInOutSine; dir: alternate; loop: true",
   // AR空間でのピンチ操作による最小・最大サイズ制限
-  minScale: 0.7,
-  maxScale: 7.0,
+  minScale: 0.2,
+  maxScale: 3.0,
 };
