@@ -3,8 +3,8 @@ import { SpecimenSettings } from "./types";
 export const greatWave: SpecimenSettings = {
   // モデルの大きさ（画面内に確実に収めるため小型化）
   scale: "0.8 0.8 0.8",
-  // モデルの重心補正（絵画の表面にほぼ重ねる）
-  position: "0 -0.2 0.01",
+  // モデルの重心補正（絵画の表面に密着し、少し下方へ移動）
+  position: "0 -0.5 0.01",
   // モデルの向き
   rotation: "0 45 0",
   // 全体の回転アニメーション（停止）
