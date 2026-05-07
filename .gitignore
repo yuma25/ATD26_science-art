@@ -137,6 +137,14 @@ GEMINI.example.md
 # 開発・運用支援スクリプト
 scripts/
 
+# 内部的な開発ドキュメントとプロンプト集（非公開）
+docs/AI_INSTRUCTIONS.md
+docs/PROMPTS/
+docs/ISSUES/
+docs/PR/
+docs/DESIGN/
+docs/system-design-reference.md
+
 # AR_dataset配下の画像以外のファイルを管理から外す
 AR_dataset/**/*
 !AR_dataset/**/*.jpg
