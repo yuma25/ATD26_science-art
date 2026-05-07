@@ -1,19 +1,18 @@
 import { SpecimenSettings } from "./types";
 
 export const commonBlue: SpecimenSettings = {
-  // モデルの大きさ（拡大）
-  scale: "12.0 12.0 12.0",
+  // モデルの大きさ（絵画との調和を優先して縮小）
+  scale: "6.0 6.0 6.0",
   // モデルの向き [X軸(上下) Y軸(左右) Z軸(傾き)]
-  // X: マイナスで上向き / Y: プラスで左向き
   rotation: "-15 20 0",
-  // 回転の揺れ（一回転させず、特定の角度範囲でゆらゆらさせる）
+  // 回転の揺れ
   outerAnimation:
     "property: rotation; from: -15 10 -5; to: -15 30 5; dur: 4500; easing: easeInOutSine; dir: alternate; loop: true",
   // 位置の移動（浮遊）
-  // Z軸をさらに大きくし、画面のこちら側（ユーザー側）へ迫ってくる動きにする
+  // 絵画の少し手前（Z軸 1.5）に配置
   innerAnimation:
-    "property: position; to: 1.0 1.5 5.5; dur: 4000; easing: easeInOutSine; dir: alternate; loop: true",
+    "property: position; to: 0.5 0.5 1.5; dur: 4000; easing: easeInOutSine; dir: alternate; loop: true",
   // AR空間でのピンチ操作による最小・最大サイズ制限
-  minScale: 2.0,
-  maxScale: 25.0,
+  minScale: 1.0,
+  maxScale: 10.0,
 };
