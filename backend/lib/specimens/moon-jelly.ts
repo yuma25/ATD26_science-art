@@ -3,8 +3,8 @@ import { SpecimenSettings } from "./types";
 export const moonJelly: SpecimenSettings = {
   // モデルの大きさ（手のひらサイズ）
   scale: "1.0 1.0 1.0",
-  // モデルの重心補正（絵画の表面に密着し、さらに下方へ移動）
-  position: "0 -0.8 0.01",
+  // モデルの重心補正（クジラに合わせて中央付近に配置）
+  position: "0 0 0.01",
   // モデルの向き
   rotation: "0 0 0",
   // 全体の回転アニメーション

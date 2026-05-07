@@ -3,6 +3,8 @@ import { SpecimenSettings } from "./types";
 export const commonBlue: SpecimenSettings = {
   // モデルの大きさ（手のひらサイズ）
   scale: "1.2 1.2 1.2",
+  // モデルの重心補正（クジラに合わせて中央付近に配置）
+  position: "0 0 0.05",
   // モデルの向き [X軸(上下) Y軸(左右) Z軸(傾き)]
   rotation: "-15 20 0",
   // 回転の揺れ
