@@ -130,20 +130,12 @@ web_modules/
 DEV_LOG.md
 GEMINI.md
 TECH_NOTES.md
+TECH_NOTES.example.md
+DEV_LOG.example.md
+GEMINI.example.md
 
-# 内部的な開発ドキュメントとプロンプト集（非公開）
-docs/AI_INSTRUCTIONS.md
-docs/PROMPTS/
-docs/ISSUES/
-docs/PR/
-docs/DESIGN/
-docs/system-design-reference.md
-
-# Optional v8 coverage directory
-node_modules/.cache/
-
-# プロジェクト固有の除外設定
-scripts/database/
+# 開発・運用支援スクリプト
+scripts/
 
 # AR_dataset配下の画像以外のファイルを管理から外す
 AR_dataset/**/*
