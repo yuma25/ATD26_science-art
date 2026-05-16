@@ -25,12 +25,20 @@ function ViewerContent() {
       <div className="absolute inset-0 opacity-20 pointer-events-none bg-[radial-gradient(circle_at_50%_50%,#3e2f28,transparent)]" />
       {/* 2. ヘッダー UI */}
       <div className="absolute top-0 left-0 right-0 z-50 p-8 flex justify-center w-full">
-        <div className="text-center space-y-1 w-full max-w-[90vw]">
-          <h1 className="text-white/90 text-sm font-black uppercase tracking-[0.3em] italic truncate whitespace-nowrap px-4">
+        <div className="text-center space-y-1 w-full max-w-[90vw] overflow-hidden">
+          <h1
+            className={`text-white/90 font-black uppercase tracking-[0.3em] italic whitespace-nowrap px-4 ${
+              name.length > 12 ? "text-[10px]" : "text-sm"
+            }`}
+          >
             {name}
           </h1>
           {artist && (
-            <p className="text-white/60 text-[10px] font-bold uppercase tracking-[0.1em] truncate whitespace-nowrap px-4">
+            <p
+              className={`text-white/60 font-bold uppercase tracking-[0.1em] whitespace-nowrap px-4 ${
+                artist.length > 15 ? "text-[8px]" : "text-[10px]"
+              }`}
+            >
               {artist}
             </p>
           )}

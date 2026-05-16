@@ -82,16 +82,26 @@ export const BadgeCard = ({
             </div>
 
             {/* テキストエリア */}
-            <div className="text-center px-1 w-full">
+            <div className="text-center px-1 w-full overflow-hidden">
               <h3
-                className={`text-sm font-bold italic font-serif leading-tight ${locked ? "opacity-20" : "text-[#3e2f28]"}`}
+                className={`font-bold italic font-serif leading-tight whitespace-nowrap ${
+                  locked ? "opacity-20" : "text-[#3e2f28]"
+                } ${
+                  (locked ? 3 : badge.name.length) > 10
+                    ? "text-[10px]"
+                    : "text-sm"
+                }`}
               >
                 {locked ? "???" : badge.name}
               </h3>
               {!locked && (
                 <>
                   {badge.artist && (
-                    <p className="text-[9px] font-bold text-[#3e2f28]/60 mt-0.5">
+                    <p
+                      className={`font-bold text-[#3e2f28]/60 mt-0.5 whitespace-nowrap ${
+                        badge.artist.length > 10 ? "text-[8px]" : "text-[9px]"
+                      }`}
+                    >
                       {badge.artist}
                     </p>
                   )}
