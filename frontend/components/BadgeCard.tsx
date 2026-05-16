@@ -49,6 +49,7 @@ export const BadgeCard = ({
     router.push(
       `/viewer?image=${encodeURIComponent(badge.image_url)}&name=${encodeURIComponent(badge.name)}&artist=${encodeURIComponent(badge.artist || "")}`,
     );
+    };
 
 
   return (
