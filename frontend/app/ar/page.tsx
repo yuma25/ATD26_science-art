@@ -200,19 +200,20 @@ export default function ARPage() {
 
         return `
         <a-entity mindar-image-target="targetIndex: ${physicalIndex}">
-          <!-- マーカーごとにコンテナを作成 -->
-          <a-entity id="model-container-${physicalIndex}">
+          <!-- マーカーごとにコンテナを作成。初期状態は非表示 -->
+          <a-entity id="model-container-${physicalIndex}" visible="false">
              <!-- 外側の回転・揺れアニメーション -->
              <a-entity animation="${outerAnim}">
-               <!-- モデル本体。内側の浮遊アニメーション -->
-               <a-gltf-model 
-                 src="${badge.model_url}"
-                 position="${pos}" 
-                 rotation="${rot}" 
-                 scale="${scale}"
-                 animation="${innerAnim}"
-                 model-log
-               ></a-gltf-model>
+               <!-- 内側の浮遊アニメーション -->
+               <a-entity animation="${innerAnim}">
+                 <a-gltf-model 
+                   src="${badge.model_url}?v=${sceneId}"
+                   position="${pos}" 
+                   rotation="${rot}" 
+                   scale="${scale}"
+                   model-log
+                 ></a-gltf-model>
+               </a-entity>
              </a-entity>
           </a-entity>
         </a-entity>
@@ -284,6 +285,17 @@ export default function ARPage() {
     let isBooted = false;
     const boot = () => {
       if (isBooted) return;
+
+      // すべてのモデルがロードされたかチェック
+      const models = sceneEl.querySelectorAll("a-gltf-model");
+      const allLoaded = Array.from(models).every((m: any) => m.hasLoaded);
+
+      if (!allLoaded) {
+        console.log("⏳ Waiting for models to load...");
+        setTimeout(boot, 100);
+        return;
+      }
+
       if (sceneEl.systems?.["mindar-image-system"]) {
         isBooted = true;
         sceneEl.systems["mindar-image-system"].start();
@@ -451,6 +463,7 @@ export default function ARPage() {
         .a-canvas {
           width: 100% !important;
           height: 100% !important;
+          background-color: transparent !important;
         }
         /* MindARが生成するビデオ要素を背景に固定 */
         video {
@@ -460,7 +473,7 @@ export default function ARPage() {
           position: fixed !important;
           top: 0 !important;
           left: 0 !important;
-          z-index: 0 !important;
+          z-index: -10 !important;
         }
       `}</style>
     </div>
