@@ -31,6 +31,7 @@ create table public.profiles (
 create table public.badges (
   id uuid default gen_random_uuid() primary key,
   name text not null,
+  artist text, -- 作者名を追加
   model_url text not null, -- AR表示用の3Dモデルパス
   image_url text not null, -- 詳細表示用の2D画像パス
   target_index int not null, -- MindARのマーカー番号 (0-5)
@@ -56,15 +57,15 @@ grant all on public.badges to anon, authenticated, service_role;
 grant all on public.user_badges to anon, authenticated, service_role;
 
 -- 6. 初期データの投入
-insert into public.badges (name, model_url, image_url, target_index)
+insert into public.badges (name, artist, model_url, image_url, target_index)
 values
-  ('蝶', '/butterfly.glb', '/images/paintings/painting_0.jpg', 0),
-  ('クジラ', '/whale.glb', '/images/paintings/painting_1.jpg', 1),
-  ('ヤドカリ', '/shellcrab.glb', '/images/paintings/painting_2.jpg', 2),
-  ('剣', '/sword.glb', '/images/paintings/painting_3.jpg', 3),
-  ('波', '/wave.glb', '/images/paintings/painting_4.jpg', 4),
-  ('クラゲ', '/jellyfish.glb', '/images/paintings/painting_5.jpg', 5);
-
+  ('sample', 'sample', '/butterfly.glb', '/images/paintings/painting_0.jpg', 0),
+  ('お母さんの初水族館', '川越あけみ', '/whale.glb', '/images/paintings/painting_1.jpg', 1),
+  ('ヤドカリ', '高山那月', '/shellcrab.glb', '/images/paintings/painting_2.jpg', 2),
+  ('海底の置く', '可部谷清楓', '/sword.glb', '/images/paintings/painting_3.jpg', 3),
+  ('よすが', '中西玲奈', '/wave.glb', '/images/paintings/painting_4.jpg', 4),
+  ('遊々海月', '石垣実莉', '/jellyfish.glb', '/images/paintings/painting_5.jpg', 5);
+筋
 -- 7. 自動プロファイル作成トリガー
 create or replace function public.handle_new_user()
 returns trigger as $$

@@ -7,11 +7,12 @@ import { z } from "zod";
 
 /**
  * --- 標本（バッジ）の設計図 ---
- */
-export const BadgeSchema = z.object({
-  id: z.string().uuid(), // 固有のID（UUID形式）
-  name: z.string().min(1, "名前は必須です"), // 標本の名前
-  model_url: z
+ export const BadgeSchema = z.object({
+   id: z.string().uuid(), // 固有のID（UUID形式）
+   name: z.string().min(1, "名前は必須です"), // 標本の名前
+   artist: z.string().optional(), // 作者の名前
+   model_url: z
+
     .string()
     .url("有効なURLを入力してください")
     .or(z.string().regex(/^\/.*$/, "相対パスは / から始めてください")), // 3Dモデルのパス

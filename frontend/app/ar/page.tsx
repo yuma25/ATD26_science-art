@@ -476,16 +476,17 @@ export default function ARPage() {
                   </div>
                 </div>
               )}
+{/* 獲得成功時のモーダル */}
+{showSuccess && activeBadge && (
+  <div style={{ pointerEvents: "auto" }}>
+    <DiscoveryComplete
+      badgeName={activeBadge.name}
+      artistName={activeBadge.artist}
+      onClose={() => setShowSuccess(false)}
+    />
+  </div>
+)}
 
-              {/* 獲得成功時のモーダル */}
-              {showSuccess && activeBadge && (
-                <div style={{ pointerEvents: "auto" }}>
-                  <DiscoveryComplete
-                    badgeName={activeBadge.name}
-                    onClose={() => setShowSuccess(false)}
-                  />
-                </div>
-              )}
             </div>
           )}
       </div>

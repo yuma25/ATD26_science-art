@@ -17,6 +17,7 @@ function ViewerContent() {
   const imageUrl =
     searchParams.get("image") || "/images/paintings/painting_0.jpg";
   const name = searchParams.get("name") || "作品";
+  const artist = searchParams.get("artist") || "";
 
   return (
     <div className="fixed inset-0 bg-[#1a1512] flex flex-col items-center justify-center overflow-hidden">
@@ -29,10 +30,15 @@ function ViewerContent() {
           <h1 className="text-white/90 text-sm font-black uppercase tracking-[0.3em] italic">
             {name}
           </h1>
-          <div className="h-[1px] w-12 bg-amber-400/50 mx-auto" />
+          {artist && (
+            <p className="text-white/60 text-[10px] font-bold uppercase tracking-[0.1em]">
+              {artist}
+            </p>
+          )}
+          <div className="h-[1px] w-12 bg-amber-400/50 mx-auto mt-2" />
         </div>
       </div>
-
+  筋
       {/* 閉じるボタン */}
       <CloseButton />
 

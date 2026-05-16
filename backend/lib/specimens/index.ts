@@ -25,12 +25,12 @@ import { moonJelly } from "./moon-jelly";
  * 各作品の名前をキーにして、AR表示用の設定をマッピングします。
  */
 export const SPECIMEN_SETTINGS: Record<string, SpecimenSettings> = {
-  蝶: commonBlue,
-  クジラ: leviathan,
-  ヤドカリ: shellcrab,
-  剣: antiqueSword,
-  波: greatWave,
-  クラゲ: moonJelly,
+  sample: commonBlue,
+  お母さんの初水族館: leviathan,
+  ちょっと不思議な海の冒険: shellcrab,
+  海底の奥: antiqueSword,
+  よすが: greatWave,
+  遊々海月: moonJelly,
 };
 
 /**

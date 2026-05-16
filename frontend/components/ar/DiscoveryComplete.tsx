@@ -14,6 +14,7 @@ import { Check } from "lucide-react";
  */
 interface DiscoveryCompleteProps {
   badgeName: string;
+  artistName?: string;
   onClose: () => void;
 }
 
@@ -23,6 +24,7 @@ interface DiscoveryCompleteProps {
  */
 export const DiscoveryComplete = ({
   badgeName,
+  artistName,
   onClose,
 }: DiscoveryCompleteProps) => {
   return (
@@ -53,7 +55,12 @@ export const DiscoveryComplete = ({
         <h2 className="text-white text-3xl font-black italic font-serif tracking-tight">
           {badgeName}
         </h2>
-        <p className="text-white/60 font-mono text-[10px] uppercase tracking-[0.5em]">
+        {artistName && (
+          <p className="text-white/80 font-medium text-sm">
+            {artistName}
+          </p>
+        )}
+        <p className="text-white/60 font-mono text-[10px] uppercase tracking-[0.5em] pt-2">
           発見成功
         </p>
       </div>
