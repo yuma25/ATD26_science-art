@@ -71,7 +71,7 @@ export const DiscoveryComplete = ({
       {/* 発見した標本の名前を表示 */}
       <div className="text-center space-y-2 w-full max-w-[85vw] overflow-hidden px-4">
         <h2
-          className={`font-black italic font-serif tracking-tight whitespace-nowrap ${
+          className={`font-black italic font-serif tracking-tight whitespace-nowrap truncate ${
             isLast ? "text-amber-400" : "text-white"
           } ${badgeName.length > 10 ? "text-xl" : "text-3xl"}`}
         >
@@ -86,7 +86,7 @@ export const DiscoveryComplete = ({
           {isLast ? "全ての記録に成功しました" : "発見成功"}
         </p>
       </div>
-      
+
       {/* 💡 全収集完了時の特別な案内メッセージ */}
       {isLast && (
         <motion.div

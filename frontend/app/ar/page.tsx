@@ -307,7 +307,7 @@ export default function ARPage() {
         setTimeout(() => {
           setupListeners();
           setupAutoScaling();
-        }, 300);
+        }, 500);
 
         // 画面サイズ変更イベントを走らせて表示を整える
         setTimeout(() => window.dispatchEvent(new Event("resize")), 500);
@@ -349,7 +349,7 @@ export default function ARPage() {
 
         {/* スキャン中 UI */}
         {status === "started" && !showSuccess && (
-          <div className="w-full h-full flex flex-col items-center justify-between p-8 pt-20 pb-40">
+          <div className="w-full h-full flex flex-col items-center justify-between p-8 pt-20 pb-48">
             {/* 上部メッセージ */}
             <div className="text-center space-y-2">
               <div className="inline-block px-4 py-1.5 bg-black/40 backdrop-blur-md rounded-full border border-white/20">

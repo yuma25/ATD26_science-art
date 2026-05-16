@@ -1,8 +1,8 @@
 import { SpecimenSettings } from "./types";
 
 export const antiqueSword: SpecimenSettings = {
-  // モデルの大きさ（手のひらサイズ）
-  scale: "1.0 1.0 1.0",
+  // モデルの大きさ
+  scale: "3.0 3.0 3.0",
   // モデルの重心補正（絵画の表面に密着させ、位置を少し下げる）
   position: "0 -0.4 0.01",
   // モデルの向き
