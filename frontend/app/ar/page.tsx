@@ -7,6 +7,7 @@ import { DiscoveryComplete } from "@/components/ar/DiscoveryComplete";
 import { CloseButton } from "@/components/layout/CloseButton";
 import { getSpecimenSettings } from "@backend/lib/constants";
 import { Camera } from "lucide-react";
+import type { Badge } from "@backend/types";
 
 /**
  * 【ARカメラ画面】
@@ -148,7 +149,7 @@ export default function ARPage() {
 
     // 2. データの変更があるか確認（不要な再描画を防止）
     const currentDataHash = JSON.stringify(
-      allBadges.map((b) => `${b.target_index}:${b.model_url}`),
+      allBadges.map((b: Badge) => `${b.target_index}:${b.model_url}`),
     );
     const existingScene = arContainerRef.current.querySelector("a-scene");
     if (existingScene && lastInjectedDataHashRef.current === currentDataHash) {
@@ -187,7 +188,7 @@ export default function ARPage() {
         <a-light type="directional" intensity="0.4" position="1 2 1"></a-light>
 
         ${allBadges
-          .map((badge) => {
+          .map((badge: Badge) => {
             const settings = getSpecimenSettings(badge.name);
             const physicalIndex = badge.target_index;
 
@@ -285,6 +286,37 @@ export default function ARPage() {
       if (sceneEl.systems?.["mindar-image-system"]) {
         isBooted = true;
         sceneEl.systems["mindar-image-system"].start();
+
+        /**
+         * 再生マーク（▶️）対策: 
+         * 1. MutationObserver でビデオ要素の追加を監視
+         * 2. 発見次第、即座に playsinline / muted を設定
+         * これにより、タイミングのズレによる「時々マークが出る」現象を防止します。
+         */
+        const fixVideo = (video: HTMLVideoElement) => {
+          video.setAttribute("playsinline", "");
+          video.setAttribute("webkit-playsinline", "");
+          video.setAttribute("autoplay", "");
+          video.muted = true;
+          video.play().catch((e) => console.warn("Video play failed:", e));
+        };
+
+        // 既存のビデオがあれば修正
+        const existingVideo = document.querySelector("video");
+        if (existingVideo) fixVideo(existingVideo);
+
+        // 新しく追加されるビデオを監視
+        const observer = new MutationObserver((mutations) => {
+          mutations.forEach((mutation) => {
+            mutation.addedNodes.forEach((node) => {
+              if (node.nodeName === "VIDEO") {
+                fixVideo(node as HTMLVideoElement);
+              }
+            });
+          });
+        });
+        observer.observe(document.body, { childList: true, subtree: true });
+
         setupListeners(); // マーカー認識のリスナーを設定
         setupAutoScaling(); // 自動サイズ調整を設定
         // 画面サイズ変更イベントを走らせて表示を整える
