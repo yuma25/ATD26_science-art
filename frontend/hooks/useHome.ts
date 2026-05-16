@@ -126,22 +126,37 @@ export const useHome = () => {
   }, [mutateSession, mutateAcquired, mutateProfile]);
 
   return {
+    /** 並び替え済みの標本リスト */
     badges: sortedBadges,
+    /** 獲得済みの標本IDリスト */
     acquiredBadgeIds,
+    /** データの検証（同期）中かどうか */
     syncing,
+    /** 初回データ読み込み中かどうか */
     initialLoading,
+    /** ユーザーのフルID (UUID) */
     fullUserId: userId,
+    /** 表示用のユーザーID */
     displayId,
+    /** パーティ人数 */
     partySize: profile?.party_size ?? (userId ? null : undefined),
+    /** 景品交換済みかどうか */
     isExchanged: profile?.is_exchanged ?? false,
+    /** パーティ人数入力画面を表示すべきかどうか */
     showPartyInput:
       !isAdmin &&
       !initialLoading &&
       (userId === "" ||
         (profile !== undefined &&
           (profile?.party_size === undefined || profile?.party_size === null))),
+    /** カメラ権限の状態 */
     cameraPermission,
+    /** 特定の標本を獲得済みかどうかを判定する関数 */
     isAcquired: (id: string) => acquiredBadgeIds.includes(id),
+    /**
+     * カメラの使用許可をリクエストする関数
+     * @returns {Promise<boolean>} 許可された場合は true、拒否された場合は false
+     */
     requestCameraPermission: async () => {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({
@@ -155,6 +170,12 @@ export const useHome = () => {
         return false;
       }
     },
+    /**
+     * パーティ人数を更新する関数
+     * 匿名ログインが必要な場合は自動的に行います。
+     * @param {number} size - 更新するパーティ人数
+     * @returns {Promise<boolean>} 更新に成功したかどうか
+     */
     updatePartySize: async (size: number) => {
       const u = await signInAnonymously();
       if (!u) return false;
@@ -165,6 +186,10 @@ export const useHome = () => {
       }
       return ok;
     },
+    /**
+     * 景品交換を実行する関数
+     * @returns {Promise<boolean>} 更新に成功したかどうか
+     */
     exchangePrize: async () => {
       if (!userId) return false;
       const ok = await BadgeService.updateProfile(userId, {
@@ -175,6 +200,9 @@ export const useHome = () => {
       }
       return ok;
     },
+    /**
+     * 獲得状況とプロフィール情報を再取得（リフレッシュ）する関数
+     */
     refresh: async () => {
       await Promise.all([mutateAcquired(), mutateProfile()]);
     },

@@ -22,6 +22,13 @@ import { Badge } from "@backend/types";
  */
 const IconList: LucideIcon[] = [Bug, MapPin, Shell, Sword, Waves, CircleDot];
 
+/**
+ * BadgeCardコンポーネントのプロパティ
+ * @interface BadgeCardProps
+ * @property {Badge} badge - 表示対象の標本データ
+ * @property {boolean} isAcquired - ユーザーがこの標本を獲得済みかどうか
+ * @property {() => void} [onSaveScroll] - 詳細画面に遷移する前に現在のスクロール位置を保存するための関数
+ */
 interface BadgeCardProps {
   badge: Badge;
   isAcquired: boolean;
@@ -29,7 +36,13 @@ interface BadgeCardProps {
 }
 
 /**
- * コンパクトに設計された確認ステップ付き標本カード
+ * 【標本カード】
+ * 図鑑（ホーム画面）で各標本の状態を表示するカードコンポーネントです。
+ * 未獲得の場合はロック表示となり、獲得済みの場合は詳細ビューアーへのリンクが有効になります。
+ * 誤操作防止のため、クリック時に「観察開始」の確認ステップを設けています。
+ *
+ * @param {BadgeCardProps} props - コンポーネントのプロパティ
+ * @returns {JSX.Element} 標本カードのUI
  */
 export const BadgeCard = ({
   badge,

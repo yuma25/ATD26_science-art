@@ -12,7 +12,13 @@ import type { Badge } from "@backend/types";
 /**
  * 【ARカメラ画面】
  * スマートフォンのカメラを使用して、現実世界に3D標本を重ねて表示します。
- * MindAR と A-Frame を組み合わせて、マーカー追従を実現しています。
+ *
+ * 技術スタック:
+ * - A-Frame: 3Dレンダリング
+ * - MindAR: 画像認識（マーカー追従）
+ * - Web Share API: 写真の共有
+ *
+ * @returns {JSX.Element} ARインターフェース
  */
 export default function ARPage() {
   const {

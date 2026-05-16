@@ -6,15 +6,16 @@ import { Award, AlertTriangle, Ticket } from "lucide-react";
 import { Badge } from "@backend/types";
 
 /**
- * FinalLogModalProps の説明：
- * @param show - モーダルを表示するかどうかのフラグ
- * @param onClose - モーダルを閉じるための関数
- * @param completionTime - 全標本を発見した日時
- * @param fullUserId - ユーザーのUUID
- * @param displayId - 表示用ID
- * @param badges - 発見した全標本のリスト
- * @param isExchanged - すでに交換済みか
- * @param onExchange - 交換実行関数
+ * FinalLogModalコンポーネントのプロパティ
+ * @interface FinalLogModalProps
+ * @property {boolean} show - モーダルを表示するかどうかのフラグ
+ * @property {() => void} onClose - モーダルを閉じるためのコールバック関数
+ * @property {string} completionTime - 全標本を発見し終えた日時の文字列
+ * @property {string} fullUserId - ユーザーのUUID
+ * @property {string} [displayId] - 画面表示用のユーザーID（ニックネームや短縮ID）
+ * @property {Badge[]} badges - 発見した全標本のデータ配列
+ * @property {boolean} isExchanged - すでに景品と交換済みかどうか
+ * @property {() => Promise<boolean>} onExchange - 交換処理を実行する非同期関数
  */
 interface FinalLogModalProps {
   show: boolean;
@@ -28,8 +29,12 @@ interface FinalLogModalProps {
 }
 
 /**
- * FinalLogModalコンポーネント本体
- * 「景品交換チケット」を模したデザインです。
+ * 【最終ログ（景品交換）モーダル】
+ * すべての標本をコンプリートした際に表示される、特別なアチーブメント画面です。
+ * 「景品交換チケット」を模したデザインで、スタッフによる景品交換の確認機能を含みます。
+ *
+ * @param {FinalLogModalProps} props - コンポーネントのプロパティ
+ * @returns {JSX.Element} 最終ログモーダルのUI
  */
 export const FinalLogModal = ({
   show,

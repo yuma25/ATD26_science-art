@@ -275,19 +275,37 @@ export const useAR = () => {
   }, [cleanupAR]);
 
   return {
+    /** 起動状態 */
     status,
+    /** 起動状態を更新する関数 */
     setStatus,
+    /** 標本を発見中かどうか */
     isFound,
+    /** 解析進捗 (0-100) */
     progress,
+    /** 現在認識中の標本が獲得済みかどうか */
     acquired,
+    /** 獲得成功画面の表示フラグ */
     showSuccess,
+    /** 画面遷移（終了処理）中かどうか */
     isExiting,
+    /** 現在認識中の標本データ */
     activeBadge,
+    /** すべての標本データのリスト */
     allBadges,
+    /** データの読み込みが完了したかどうか */
     isLoaded,
+    /** 獲得済みの標本IDリスト */
     acquiredBadgeIds,
+    /**
+     * マーカー認識のリスナーを設定する関数
+     * A-Frame のエンティティに対して、発見・見失い時のイベントを紐付けます。
+     */
     setupListeners,
-    // ホームに戻る処理
+    /**
+     * ホーム画面に戻る処理
+     * ARのクリーンアップを実行した後に遷移します。
+     */
     navigateHome: useCallback(() => {
       setIsExiting(true);
       cleanupAR();
@@ -295,8 +313,12 @@ export const useAR = () => {
         window.location.href = "/";
       }, 300);
     }, [cleanupAR]),
+    /** 獲得成功画面の表示フラグを更新する関数 */
     setShowSuccess,
-    // 記念撮影（キャプチャ）処理
+    /**
+     * 標本の記念撮影（キャプチャ）を行う関数
+     * ビデオ映像と3Dモデルを合成して画像を生成し、共有または保存します。
+     */
     captureImage: useCallback(async () => {
       // a-scene 要素は A-Frame のカスタム要素であるため、必要なプロパティを持つことを想定します
       const sceneEl = document.querySelector("a-scene") as HTMLElement & {
