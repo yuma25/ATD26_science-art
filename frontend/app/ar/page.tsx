@@ -449,37 +449,24 @@ export default function ARPage() {
 
       {/* 閉じるボタン */}
       <CloseButton onClick={navigateHome} />
+{/* スタイル定義 */}
+<style jsx global>{`
+  .a-canvas {
+    width: 100% !important;
+    height: 100% !important;
+  }
+  /* MindARが生成するビデオ要素を背景に固定 */
+  video {
+    object-fit: cover !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    z-index: 0 !important;
+  }
+`}</style>
 
-      {/* スタイル定義 */}
-      <style jsx global>{`
-        @keyframes scan {
-          0% {
-            transform: translateY(-80px);
-            opacity: 0;
-          }
-          50% {
-            opacity: 1;
-          }
-          100% {
-            transform: translateY(80px);
-            opacity: 0;
-          }
-        }
-        .a-canvas {
-          width: 100% !important;
-          height: 100% !important;
-        }
-        /* MindARが生成するビデオ要素を背景に固定 */
-        video {
-          object-fit: cover !important;
-          width: 100vw !important;
-          height: 100vh !important;
-          position: fixed !important;
-          top: 0 !important;
-          left: 0 !important;
-          z-index: 0 !important;
-        }
-      `}</style>
     </div>
   );
 }
