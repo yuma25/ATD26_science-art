@@ -367,19 +367,6 @@ export default function ARPage() {
               )}
             </div>
 
-            {/* 中央のスキャンガイド（見つかっていない時のみ表示） */}
-            {!isFound && (
-              <div className="relative w-64 h-64 flex items-center justify-center">
-                <div className="absolute inset-0 border-[0.5px] border-white/20 rounded-xl"></div>
-                <div className="absolute top-0 left-0 w-8 h-8 border-t-2 border-l-2 border-white/60 rounded-tl-lg"></div>
-                <div className="absolute top-0 right-0 w-8 h-8 border-t-2 border-r-2 border-white/60 rounded-tr-lg"></div>
-                <div className="absolute bottom-0 left-0 w-8 h-8 border-b-2 border-l-2 border-white/60 rounded-bl-lg"></div>
-                <div className="absolute bottom-0 right-0 w-8 h-8 border-b-2 border-r-2 border-white/60 rounded-br-lg"></div>
-
-                <div className="w-48 h-0.5 bg-gradient-to-r from-transparent via-white/40 to-transparent animate-[scan_2s_ease-in-out_infinite]"></div>
-              </div>
-            )}
-
             {/* 下部の進捗バー（解析中のみ表示） */}
             {isFound && !acquired && (
               <div className="w-full max-w-[280px] space-y-4">
@@ -449,24 +436,24 @@ export default function ARPage() {
 
       {/* 閉じるボタン */}
       <CloseButton onClick={navigateHome} />
-{/* スタイル定義 */}
-<style jsx global>{`
-  .a-canvas {
-    width: 100% !important;
-    height: 100% !important;
-  }
-  /* MindARが生成するビデオ要素を背景に固定 */
-  video {
-    object-fit: cover !important;
-    width: 100vw !important;
-    height: 100vh !important;
-    position: fixed !important;
-    top: 0 !important;
-    left: 0 !important;
-    z-index: 0 !important;
-  }
-`}</style>
 
+      {/* スタイル定義 */}
+      <style jsx global>{`
+        .a-canvas {
+          width: 100% !important;
+          height: 100% !important;
+        }
+        /* MindARが生成するビデオ要素を背景に固定 */
+        video {
+          object-fit: cover !important;
+          width: 100vw !important;
+          height: 100vh !important;
+          position: fixed !important;
+          top: 0 !important;
+          left: 0 !important;
+          z-index: 0 !important;
+        }
+      `}</style>
     </div>
   );
 }
