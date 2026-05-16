@@ -27,7 +27,7 @@ AR（拡張現実）技術を用いた絵画コレクション・管理アプリ
 - **Commit**: Commitlint, Lefthook (Pre-commit hook)
 
 > [!TIP]
-> 本プロジェクトは Vercel や Supabase の無料枠を最大限活用し、低コストで運用できるよう最適化されています。詳細は [アーキテクチャ設計書](./docs/ARCHITECTURE.md#6-運用コストとスケーラビリティ) を参照してください。
+> 本プロジェクトは Vercel や Supabase の無料枠を最大限活用し、低コストで運用できるよう最適化されています（Next.js の `standalone` モード出力、SWR による多層キャッシュ等）。詳細は [アーキテクチャ設計書](./docs/ARCHITECTURE.md#6-運用コストとスケーラビリティ) を参照してください。
 
 ---
 
