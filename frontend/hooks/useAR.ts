@@ -285,6 +285,7 @@ export const useAR = () => {
     activeBadge,
     allBadges,
     isLoaded,
+    acquiredBadgeIds,
     setupListeners,
     // ホームに戻る処理
     navigateHome: useCallback(() => {

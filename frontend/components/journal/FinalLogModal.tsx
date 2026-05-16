@@ -196,27 +196,32 @@ export const FinalLogModal = ({
                   <motion.div
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="space-y-2 sm:space-y-5 bg-white p-2 sm:p-5 border-[1px] sm:border-2 border-amber-500 shadow-2xl rounded-md"
+                    className="space-y-4 sm:space-y-5 bg-white p-3 sm:p-5 border-2 border-amber-500 shadow-2xl rounded-md"
                   >
-                    <AlertTriangle className="mx-auto text-amber-500 w-4 h-4 sm:w-8 sm:h-8" />
-                    <p className="text-[7px] sm:text-[10px] font-black text-[#3e2f28] leading-tight">
-                      スタッフの前で
-                      <br />
-                      操作してください
-                    </p>
+                    <AlertTriangle className="mx-auto text-amber-500 w-6 h-6 sm:w-8 sm:h-8" />
                     <div className="space-y-1">
+                      <p className="text-[12px] sm:text-[14px] font-black text-red-600 leading-tight">
+                        スタッフ専用
+                      </p>
+                      <p className="text-[9px] sm:text-[11px] font-bold text-[#3e2f28] leading-tight">
+                        スタッフにこの画面を
+                        <br />
+                        見せてください
+                      </p>
+                    </div>
+                    <div className="space-y-1 pt-2">
                       <button
                         disabled={exchanging}
                         onClick={handleExchange}
-                        className="w-full py-2 sm:py-3 bg-amber-500 text-white text-[7px] sm:text-[10px] font-black uppercase shadow-lg active:scale-95 disabled:opacity-50"
+                        className="w-full py-3 bg-amber-500 text-white text-[10px] sm:text-[12px] font-black uppercase shadow-lg active:scale-95 disabled:opacity-50"
                       >
-                        OK
+                        引き換えを実行
                       </button>
                       <button
                         onClick={() => setConfirmStep(0)}
-                        className="w-full py-1 text-[6px] sm:text-[9px] font-bold text-[#3e2f28]/40 uppercase tracking-widest"
+                        className="w-full py-1 text-[8px] sm:text-[9px] font-bold text-[#3e2f28]/40 uppercase tracking-widest"
                       >
-                        Cancel
+                        戻る
                       </button>
                     </div>
                   </motion.div>
