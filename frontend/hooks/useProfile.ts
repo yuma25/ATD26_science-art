@@ -4,6 +4,8 @@ import { BadgeService } from "@backend/services/badgeService";
 /**
  * 【プロフィール管理フック】
  * ユーザーのプロフィール情報を取得し、更新機能を提供します。
+ *
+ * @param {string | undefined} userId - 対象のユーザーID（UUID）
  */
 export function useProfile(userId: string | undefined) {
   const { data, error, isLoading, mutate } = useSWR(
@@ -17,6 +19,10 @@ export function useProfile(userId: string | undefined) {
 
   /**
    * プロフィールを更新し、キャッシュを最新の状態にします。
+   *
+   * @param {Object} updates - 更新内容（パーティ人数など）
+   * @param {number} [updates.party_size] - パーティ人数
+   * @returns {Promise<boolean>} 更新に成功したかどうか
    */
   const updateProfile = async (updates: { party_size?: number }) => {
     if (!userId) return false;
@@ -29,10 +35,15 @@ export function useProfile(userId: string | undefined) {
   };
 
   return {
+    /** プロフィールデータ */
     profile: data,
+    /** 読み込み中フラグ */
     isLoading,
+    /** エラー情報 */
     isError: error,
+    /** プロフィール更新関数 */
     updateProfile,
+    /** データを再取得（リフレッシュ）する関数 */
     refresh: mutate,
   };
 }

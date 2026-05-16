@@ -1,6 +1,7 @@
 "use client";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import useSWR from "swr";
 
-import { useState, useEffect, useRef, useCallback } from "react";
 import { supabase, signInAnonymously } from "@backend/lib/supabase";
 import { Badge } from "@backend/types";
 import { BadgeService } from "@backend/services/badgeService";
@@ -18,8 +19,43 @@ export const useAR = () => {
   const [showSuccess, setShowSuccess] = useState(false); // 獲得成功画面の表示フラグ
   const [isExiting, setIsExiting] = useState(false); // 終了処理中かどうか
   const [activeBadge, setActiveBadge] = useState<Badge | null>(null); // 現在認識中の標本
-  const [allBadges, setAllBadges] = useState<Badge[]>([]); // 全標本のデータ
-  const [isLoaded, setIsLoaded] = useState(false); // データのロード完了フラグ
+
+  // --- データ取得 (SWRキャッシュ利用) ---
+  // useHome と同じキーを使用することで、ホーム画面で取得済みのデータを再利用（キャッシュ）します。
+
+  // 1. セッション情報
+  const { data: sessionData } = useSWR("user-session", async () => {
+    if (!supabase) return null;
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+    return session;
+  });
+  const userId = sessionData?.user?.id || "";
+
+  // 2. 全標本リスト
+  const { data: allBadges = [], isLoading: loadingBadges } = useSWR(
+    "all-badges",
+    () => BadgeService.getAllBadges(),
+    { revalidateOnFocus: false, dedupingInterval: 60000 },
+  );
+
+  // 3. 獲得済み標本リスト
+  const {
+    data: acquiredRows = [],
+    isLoading: loadingAcquired,
+    mutate: mutateAcquired,
+  } = useSWR(
+    userId ? `acquired-${userId}` : null,
+    () => BadgeService.getAcquiredBadges(userId),
+    { revalidateOnFocus: false },
+  );
+
+  const acquiredBadgeIds = useMemo(
+    () => acquiredRows.map((r) => r.badge_id),
+    [acquiredRows],
+  );
+  const isLoaded = !loadingBadges && (!userId || !loadingAcquired);
 
   // --- 変数管理 (Ref) ---
   // 初心者向けメモ：Refは再レンダリングを発生させずに最新の値を保持するために使います。
@@ -32,6 +68,10 @@ export const useAR = () => {
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const acquiredRef = useRef(false);
   const acquiredBadgeIdsRef = useRef<string[]>([]);
+
+  useEffect(() => {
+    acquiredBadgeIdsRef.current = acquiredBadgeIds;
+  }, [acquiredBadgeIds]);
 
   /**
    * --- クリーンアップ処理 ---
@@ -87,28 +127,38 @@ export const useAR = () => {
   /**
    * 標本の解析が完了した時の処理
    */
-  const handleSuccess = useCallback(async (badgeId: string) => {
-    // すでに獲得処理中なら何もしない（早期リターン）
-    if (acquiredRef.current) return;
+  const handleSuccess = useCallback(
+    async (badgeId: string) => {
+      // すでに獲得処理中なら何もしない（早期リターン）
+      if (acquiredRef.current) return;
 
-    setAcquired(true);
-    acquiredRef.current = true;
-    setShowSuccess(true);
+      setAcquired(true);
+      acquiredRef.current = true;
+      setShowSuccess(true);
 
-    // 獲得済みリストに追加
-    if (!acquiredBadgeIdsRef.current.includes(badgeId)) {
-      acquiredBadgeIdsRef.current.push(badgeId);
-    }
+      // 獲得済みリストに追加
+      if (!acquiredBadgeIdsRef.current.includes(badgeId)) {
+        acquiredBadgeIdsRef.current.push(badgeId);
+      }
 
-    // データベースに記録（ログインしている場合のみ）
-    if (!supabase) return;
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    if (user) {
-      await BadgeService.acquireBadge(user.id, badgeId);
-    }
-  }, []);
+      // データベースに記録（ログインしている場合のみ）
+      if (!supabase) return;
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (user) {
+        const { data: newAcquired } = await BadgeService.acquireBadge(
+          user.id,
+          badgeId,
+        );
+        if (newAcquired) {
+          // キャッシュを更新して、ホーム画面に戻った時にも反映されるようにします
+          void mutateAcquired();
+        }
+      }
+    },
+    [mutateAcquired],
+  );
 
   /**
    * 解析進捗（ゲージ）を溜める処理
@@ -119,14 +169,14 @@ export const useAR = () => {
       if (timerRef.current) clearInterval(timerRef.current);
 
       timerRef.current = setInterval(() => {
-        progressRef.current += 2; // 進むスピード
+        progressRef.current += 1; // 進むスピード
         setProgress(Math.floor(progressRef.current));
 
         if (progressRef.current >= 100) {
           clearInterval(timerRef.current!);
           handleSuccess(badgeId);
         }
-      }, 30);
+      }, 40);
     },
     [handleSuccess],
   );
@@ -220,41 +270,42 @@ export const useAR = () => {
    * --- 初期化処理 ---
    */
   useEffect(() => {
-    const init = async () => {
-      // 1. 匿名ログイン
-      const user = await signInAnonymously();
-      if (!user) return;
-
-      // 2. 標本データと自分の獲得状況を同時に取得
-      const [badges, myAcquiredIds] = await Promise.all([
-        BadgeService.getAllBadges(),
-        BadgeService.getAcquiredBadgeIds(user.id),
-      ]);
-
-      setAllBadges(badges);
-      acquiredBadgeIdsRef.current = myAcquiredIds;
-      setIsLoaded(true);
-    };
-
-    init();
-
     // クリーンアップ関数を返して、アンマウント時に実行されるようにします
     return () => cleanupAR();
   }, [cleanupAR]);
 
   return {
+    /** 起動状態 */
     status,
+    /** 起動状態を更新する関数 */
     setStatus,
+    /** 標本を発見中かどうか */
     isFound,
+    /** 解析進捗 (0-100) */
     progress,
+    /** 現在認識中の標本が獲得済みかどうか */
     acquired,
+    /** 獲得成功画面の表示フラグ */
     showSuccess,
+    /** 画面遷移（終了処理）中かどうか */
     isExiting,
+    /** 現在認識中の標本データ */
     activeBadge,
+    /** すべての標本データのリスト */
     allBadges,
+    /** データの読み込みが完了したかどうか */
     isLoaded,
+    /** 獲得済みの標本IDリスト */
+    acquiredBadgeIds,
+    /**
+     * マーカー認識のリスナーを設定する関数
+     * A-Frame のエンティティに対して、発見・見失い時のイベントを紐付けます。
+     */
     setupListeners,
-    // ホームに戻る処理
+    /**
+     * ホーム画面に戻る処理
+     * ARのクリーンアップを実行した後に遷移します。
+     */
     navigateHome: useCallback(() => {
       setIsExiting(true);
       cleanupAR();
@@ -262,8 +313,12 @@ export const useAR = () => {
         window.location.href = "/";
       }, 300);
     }, [cleanupAR]),
+    /** 獲得成功画面の表示フラグを更新する関数 */
     setShowSuccess,
-    // 記念撮影（キャプチャ）処理
+    /**
+     * 標本の記念撮影（キャプチャ）を行う関数
+     * ビデオ映像と3Dモデルを合成して画像を生成し、共有または保存します。
+     */
     captureImage: useCallback(async () => {
       // a-scene 要素は A-Frame のカスタム要素であるため、必要なプロパティを持つことを想定します
       const sceneEl = document.querySelector("a-scene") as HTMLElement & {

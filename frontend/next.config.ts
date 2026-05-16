@@ -1,7 +1,8 @@
 import type { NextConfig } from "next";
-
 const nextConfig: NextConfig = {
+  output: "standalone", // 💡 最小限のファイルだけで実行可能な形式で出力
   transpilePackages: ["@app/backend"],
+
   experimental: {
     // プロジェクトルート外のディレクトリからのインポートを許可します
     externalDir: true,

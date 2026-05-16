@@ -7,9 +7,9 @@
  * --- 進捗率の計算 ---
  * 全体の数と獲得した数から、進捗をパーセント（0〜100）で計算します。
  *
- * @param total 全体の数（目標数）
- * @param acquired 獲得済みの数（現在の成果）
- * @returns 0-100 の整数（進捗率）
+ * @param {number} total - 全体の数（目標数）
+ * @param {number} acquired - 獲得済みの数（現在の成果）
+ * @returns {number} 0-100 の整数（進捗率）
  */
 export function calculateProgress(total: number, acquired: number): number {
   // 1. 分母（全体の数）が 0 以下の場合は計算できないため、0% を返します（早期リターン）

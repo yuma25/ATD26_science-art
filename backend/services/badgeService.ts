@@ -8,10 +8,12 @@ import { Badge, BadgeSchema, UserBadge, UserBadgeSchema } from "../types";
  */
 export const BadgeService = {
   /**
-   * --- 標本情報の取得 ---
-   * 世界に散らばるすべての標本データを取得します。
-   * @param signal - 通信を中断するための信号
-   * @returns 標本データの配列
+   * --- すべての標本情報を取得 ---
+   * データベースに登録されているすべての標本データを取得します。
+   * クライアント側（ブラウザ）では内部API経由、サーバー側では直接DBから取得します。
+   * 
+   * @param {AbortSignal} [signal] - リクエストを中断するためのシグナル
+   * @returns {Promise<Badge[]>} 標本データの配列。エラー時は空配列を返します。
    */
   async getAllBadges(signal?: AbortSignal): Promise<Badge[]> {
     // 1. クライアント側（ブラウザ）で実行されている場合、専用の内部APIを呼び出します
@@ -40,9 +42,9 @@ export const BadgeService = {
 
     const { data, error } = await client
       .from("badges")
-      .select("*")
+      .select("id, name, artist, model_url, image_url, target_index")
       .order("target_index");
-
+    
     if (error) {
       console.error("[BadgeService/Server] DB取得エラー:", error.message);
       return [];
@@ -52,9 +54,12 @@ export const BadgeService = {
   },
 
   /**
-   * --- 冒険者プロフィールの取得 ---
-   * 特定のユーザーの設定やステータスを取得します。
-   * @param userId - ユーザーの固有ID
+   * --- ユーザープロフィールの取得 ---
+   * 指定されたユーザーIDに対応するプロフィール情報（パーティ人数、景品交換フラグなど）を取得します。
+   * 
+   * @param {string} userId - 取得対象のユーザーID（UUID）
+   * @param {AbortSignal} [signal] - リクエストを中断するためのシグナル
+   * @returns {Promise<any | null>} プロフィールデータ。見つからない場合やエラー時は null を返します。
    */
   async getProfile(userId: string, signal?: AbortSignal) {
     if (typeof window !== "undefined") {
@@ -87,11 +92,13 @@ export const BadgeService = {
   },
 
   /**
-   * --- 標本の発見を記録 ---
-   * 冒険者が新たな標本を発見した事実を永続化します。
-   * @param userId - 発見したユーザーのID
-   * @param badgeId - 発見された標本のID
-   * @returns 保存された記録、またはエラー情報
+   * --- 標本の獲得を記録 ---
+   * ユーザーが標本を発見したことをデータベースに記録します。
+   * プロフィールが存在しない場合は自動的に作成します。
+   * 
+   * @param {string} userId - 獲得したユーザーのID
+   * @param {string} badgeId - 獲得対象の標本ID
+   * @returns {Promise<{data: UserBadge | null, error: any}>} 登録されたデータ、またはエラーオブジェクト
    */
   async acquireBadge(userId: string, badgeId: string) {
     // 1. クライアント側（ブラウザ）で実行されている場合、専用のAPIエンドポイントを呼び出します
@@ -148,9 +155,12 @@ export const BadgeService = {
   },
 
   /**
-   * --- 獲得済み標本リストの取得 ---
-   * ユーザーがこれまでに発見したすべての標本記録を取得します。
-   * @param userId - ユーザーID
+   * --- 獲得済み標本リストを取得 ---
+   * 指定されたユーザーがこれまでに獲得したすべての標本記録を取得します。
+   * 
+   * @param {string} userId - 取得対象のユーザーID
+   * @param {AbortSignal} [signal] - リクエストを中断するためのシグナル
+   * @returns {Promise<UserBadge[]>} 獲得済み標本データの配列
    */
   async getAcquiredBadges(
     userId: string,
@@ -192,7 +202,12 @@ export const BadgeService = {
 
   /**
    * --- 獲得済み標本のIDリストのみを取得 ---
-   * 重複チェックなどのために、IDのみの配列を返します。
+   * ユーザーが獲得済みの標本IDを配列形式で取得します。
+   * フロントエンドでの重複チェックや表示切り替えに利用します。
+   * 
+   * @param {string} userId - 取得対象のユーザーID
+   * @param {AbortSignal} [signal] - リクエストを中断するためのシグナル
+   * @returns {Promise<string[]>} 獲得済み標本ID（文字列）の配列
    */
   async getAcquiredBadgeIds(
     userId: string,
@@ -204,6 +219,13 @@ export const BadgeService = {
 
   /**
    * --- プロフィールの更新 ---
+   * ユーザーのプロフィール情報（パーティ人数や景品交換状況など）を更新します。
+   * 
+   * @param {string} userId - 更新対象のユーザーID
+   * @param {Object} updates - 更新内容
+   * @param {number} [updates.party_size] - パーティ（グループ）の人数
+   * @param {boolean} [updates.is_exchanged] - 景品交換が完了したかどうか
+   * @returns {Promise<boolean>} 更新に成功した場合は true、失敗した場合は false を返します。
    */
   async updateProfile(
     userId: string,

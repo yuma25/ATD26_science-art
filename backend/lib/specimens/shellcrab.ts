@@ -1,8 +1,8 @@
 import { SpecimenSettings } from "./types";
 
 export const shellcrab: SpecimenSettings = {
-  // モデルの大きさ（手のひらサイズ）
-  scale: "1.2 1.2 1.2",
+  // モデルの大きさ
+  scale: "4.5 4.5 4.5",
   // モデルの重心補正（絵画の表面に密着させ、位置を少し下げる）
   position: "0 -0.4 0.01",
   // モデルの向き

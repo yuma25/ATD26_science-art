@@ -22,6 +22,13 @@ import { Badge } from "@backend/types";
  */
 const IconList: LucideIcon[] = [Bug, MapPin, Shell, Sword, Waves, CircleDot];
 
+/**
+ * BadgeCardコンポーネントのプロパティ
+ * @interface BadgeCardProps
+ * @property {Badge} badge - 表示対象の標本データ
+ * @property {boolean} isAcquired - ユーザーがこの標本を獲得済みかどうか
+ * @property {() => void} [onSaveScroll] - 詳細画面に遷移する前に現在のスクロール位置を保存するための関数
+ */
 interface BadgeCardProps {
   badge: Badge;
   isAcquired: boolean;
@@ -29,7 +36,13 @@ interface BadgeCardProps {
 }
 
 /**
- * コンパクトに設計された確認ステップ付き標本カード
+ * 【標本カード】
+ * 図鑑（ホーム画面）で各標本の状態を表示するカードコンポーネントです。
+ * 未獲得の場合はロック表示となり、獲得済みの場合は詳細ビューアーへのリンクが有効になります。
+ * 誤操作防止のため、クリック時に「観察開始」の確認ステップを設けています。
+ *
+ * @param {BadgeCardProps} props - コンポーネントのプロパティ
+ * @returns {JSX.Element} 標本カードのUI
  */
 export const BadgeCard = ({
   badge,
@@ -47,7 +60,7 @@ export const BadgeCard = ({
     if (locked) return;
     if (onSaveScroll) onSaveScroll();
     router.push(
-      `/viewer?image=${encodeURIComponent(badge.image_url)}&name=${encodeURIComponent(badge.name)}`,
+      `/viewer?image=${encodeURIComponent(badge.image_url)}&name=${encodeURIComponent(badge.name)}&artist=${encodeURIComponent(badge.artist || "")}`,
     );
   };
 
@@ -82,16 +95,33 @@ export const BadgeCard = ({
             </div>
 
             {/* テキストエリア */}
-            <div className="text-center px-1">
+            <div className="text-center px-1 w-full overflow-hidden">
               <h3
-                className={`text-sm font-bold italic font-serif leading-tight ${locked ? "opacity-20" : "text-[#3e2f28]"}`}
+                className={`font-bold italic font-serif leading-tight whitespace-nowrap ${
+                  locked ? "opacity-20" : "text-[#3e2f28]"
+                } ${
+                  (locked ? 3 : badge.name.length) > 10
+                    ? "text-[10px]"
+                    : "text-sm"
+                }`}
               >
                 {locked ? "???" : badge.name}
               </h3>
               {!locked && (
-                <p className="text-[7px] font-mono text-[#3e2f28]/30 uppercase tracking-widest mt-0.5">
-                  RECORDED
-                </p>
+                <>
+                  {badge.artist && (
+                    <p
+                      className={`font-bold text-[#3e2f28]/60 mt-0.5 whitespace-nowrap ${
+                        badge.artist.length > 10 ? "text-[8px]" : "text-[9px]"
+                      }`}
+                    >
+                      {badge.artist}
+                    </p>
+                  )}
+                  <p className="text-[7px] font-mono text-[#3e2f28]/30 uppercase tracking-widest mt-1">
+                    RECORDED
+                  </p>
+                </>
               )}
             </div>
 
