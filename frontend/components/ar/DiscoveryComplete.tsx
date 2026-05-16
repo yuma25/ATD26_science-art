@@ -73,7 +73,13 @@ export const DiscoveryComplete = ({
         <h2
           className={`font-black italic font-serif tracking-tight whitespace-nowrap truncate ${
             isLast ? "text-amber-400" : "text-white"
-          } ${badgeName.length > 10 ? "text-xl" : "text-3xl"}`}
+          } ${
+            badgeName.length > 12
+              ? "text-lg"
+              : badgeName.length > 8
+                ? "text-xl"
+                : "text-3xl"
+          }`}
         >
           {badgeName}
         </h2>

@@ -2,7 +2,7 @@ import { SpecimenSettings } from "./types";
 
 export const moonJelly: SpecimenSettings = {
   // モデルの大きさ
-  scale: "3.0 3.0 3.0",
+  scale: "4.5 4.5 4.5",
   // モデルの重心補正（絵画の表面に密着させ、位置を少し下げる）
   position: "0 -0.4 0.01",
   // モデルの向き

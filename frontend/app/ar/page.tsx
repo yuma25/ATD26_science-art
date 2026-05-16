@@ -89,6 +89,17 @@ export default function ARPage() {
         // デコーダーを A-Frame に紐付け
         const win = window as any;
         const AFRAME = win.AFRAME;
+
+        if (AFRAME && !AFRAME.components["model-log"]) {
+          AFRAME.registerComponent("model-log", {
+            init: function () {
+              this.el.addEventListener("model-loaded", () => {
+                console.log("model-loaded:", this.el.getAttribute("src"));
+              });
+            },
+          });
+        }
+
         if (AFRAME && AFRAME.THREE) {
           const THREE = AFRAME.THREE;
           let MeshoptDecoder = win.MeshoptDecoder;
@@ -189,8 +200,8 @@ export default function ARPage() {
 
         return `
         <a-entity mindar-image-target="targetIndex: ${physicalIndex}">
-          <!-- マーカーごとにコンテナを作成。初期状態は非表示(visible:false) -->
-          <a-entity id="model-container-${physicalIndex}" visible="false">
+          <!-- マーカーごとにコンテナを作成 -->
+          <a-entity id="model-container-${physicalIndex}">
              <!-- 外側の回転・揺れアニメーション -->
              <a-entity animation="${outerAnim}">
                <!-- モデル本体。内側の浮遊アニメーション -->
@@ -200,6 +211,7 @@ export default function ARPage() {
                  rotation="${rot}" 
                  scale="${scale}"
                  animation="${innerAnim}"
+                 model-log
                ></a-gltf-model>
              </a-entity>
           </a-entity>
@@ -226,8 +238,8 @@ export default function ARPage() {
         <a-camera position="0 0 0" look-controls="enabled: false" cursor="fuse: false; rayOrigin: mouse;" raycaster="far: ${10000}; objects: .clickable"></a-camera>
 
         <!-- 物理ベースライティングへの対応 -->
-        <a-light type="ambient" intensity="0.2"></a-light>
-        <a-light type="directional" intensity="0.4" position="1 2 1"></a-light>
+        <a-light type="ambient" intensity="0.7"></a-light>
+        <a-light type="directional" intensity="1.0" position="1 2 1"></a-light>
 
         ${entitiesHtml}
       </a-scene>

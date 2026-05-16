@@ -169,14 +169,14 @@ export const useAR = () => {
       if (timerRef.current) clearInterval(timerRef.current);
 
       timerRef.current = setInterval(() => {
-        progressRef.current += 2; // 進むスピード
+        progressRef.current += 1; // 進むスピード
         setProgress(Math.floor(progressRef.current));
 
         if (progressRef.current >= 100) {
           clearInterval(timerRef.current!);
           handleSuccess(badgeId);
         }
-      }, 30);
+      }, 40);
     },
     [handleSuccess],
   );
