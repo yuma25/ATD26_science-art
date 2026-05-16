@@ -37,7 +37,7 @@ function ViewerContent() {
           <div className="h-[1px] w-12 bg-amber-400/50 mx-auto mt-2" />
         </div>
       </div>
-      筋{/* 閉じるボタン */}
+      {/* 閉じるボタン */}
       <CloseButton />
       {/* 3. メイン画像表示（豪華な額縁演出） */}
       <div className="relative z-10 p-2 sm:p-4 bg-gradient-to-br from-[#d4af37] via-[#f9e4b7] to-[#8c6d31] shadow-[0_50px_100px_-20px_rgba(0,0,0,1)] border border-[#b8860b]/30">

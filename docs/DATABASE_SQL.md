@@ -65,7 +65,7 @@ values
   ('海底の置く', '可部谷清楓', '/sword.glb', '/images/paintings/painting_3.jpg', 3),
   ('よすが', '中西玲奈', '/wave.glb', '/images/paintings/painting_4.jpg', 4),
   ('遊々海月', '石垣実莉', '/jellyfish.glb', '/images/paintings/painting_5.jpg', 5);
-筋
+
 -- 7. 自動プロファイル作成トリガー
 create or replace function public.handle_new_user()
 returns trigger as $$
@@ -89,10 +89,14 @@ begin
   return new;
 end;
 $$ language plpgsql;
-
 create trigger tr_update_last_seen
   before update on public.profiles
   for each row execute procedure public.handle_update_last_seen();
+
+-- 9. インデックスの追加（検索の高速化とCPU負荷軽減）
+create index idx_badges_target_index on public.badges(target_index);
+create index idx_user_badges_user_id on public.user_badges(user_id);
+
 ```
 
 ---

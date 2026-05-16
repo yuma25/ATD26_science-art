@@ -40,9 +40,9 @@ export const BadgeService = {
 
     const { data, error } = await client
       .from("badges")
-      .select("*")
+      .select("id, name, artist, model_url, image_url, target_index")
       .order("target_index");
-
+    
     if (error) {
       console.error("[BadgeService/Server] DB取得エラー:", error.message);
       return [];
