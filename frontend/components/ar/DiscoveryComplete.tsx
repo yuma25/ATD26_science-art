@@ -56,9 +56,7 @@ export const DiscoveryComplete = ({
           {badgeName}
         </h2>
         {artistName && (
-          <p className="text-white/80 font-medium text-sm">
-            {artistName}
-          </p>
+          <p className="text-white/80 font-medium text-sm">{artistName}</p>
         )}
         <p className="text-white/60 font-mono text-[10px] uppercase tracking-[0.5em] pt-2">
           発見成功

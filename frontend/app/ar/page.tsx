@@ -288,7 +288,7 @@ export default function ARPage() {
         sceneEl.systems["mindar-image-system"].start();
 
         /**
-         * 再生マーク（▶️）対策: 
+         * 再生マーク（▶️）対策:
          * 1. MutationObserver でビデオ要素の追加を監視
          * 2. 発見次第、即座に playsinline / muted を設定
          * これにより、タイミングのズレによる「時々マークが出る」現象を防止します。
@@ -476,17 +476,16 @@ export default function ARPage() {
                   </div>
                 </div>
               )}
-{/* 獲得成功時のモーダル */}
-{showSuccess && activeBadge && (
-  <div style={{ pointerEvents: "auto" }}>
-    <DiscoveryComplete
-      badgeName={activeBadge.name}
-      artistName={activeBadge.artist}
-      onClose={() => setShowSuccess(false)}
-    />
-  </div>
-)}
-
+              {/* 獲得成功時のモーダル */}
+              {showSuccess && activeBadge && (
+                <div style={{ pointerEvents: "auto" }}>
+                  <DiscoveryComplete
+                    badgeName={activeBadge.name}
+                    artistName={activeBadge.artist}
+                    onClose={() => setShowSuccess(false)}
+                  />
+                </div>
+              )}
             </div>
           )}
       </div>
