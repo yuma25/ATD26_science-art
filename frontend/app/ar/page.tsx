@@ -17,8 +17,6 @@ import type { Badge } from "@backend/types";
  * - A-Frame: 3Dレンダリング
  * - MindAR: 画像認識（マーカー追従）
  * - Web Share API: 写真の共有
- *
- * @returns {JSX.Element} ARインターフェース
  */
 export default function ARPage() {
   const {
@@ -43,7 +41,6 @@ export default function ARPage() {
   const lastInjectedDataHashRef = useRef<string>("");
   const [isClient, setIsClient] = useState(false);
   const [isSceneReady, setIsSceneReady] = useState(false);
-  const [isPermissionsGranted, setIsPermissionsGranted] = useState(false);
 
   // マウント時にクライアントサイドであることをフラグ立て
   useEffect(() => {
@@ -203,7 +200,6 @@ export default function ARPage() {
                  rotation="${rot}" 
                  scale="${scale}"
                  animation="${innerAnim}"
-                 gesture-handler
                ></a-gltf-model>
              </a-entity>
           </a-entity>
@@ -284,7 +280,6 @@ export default function ARPage() {
          * 再生マーク（▶️）対策:
          * 1. MutationObserver でビデオ要素の追加を監視
          * 2. 発見次第、即座に playsinline / muted を設定
-         * これにより、タイミングのズレによる「時々マークが出る」現象を防止します。
          */
         const fixVideo = (video: HTMLVideoElement) => {
           video.setAttribute("playsinline", "");
@@ -294,11 +289,9 @@ export default function ARPage() {
           video.play().catch((e) => console.warn("Video play failed:", e));
         };
 
-        // 既存のビデオがあれば修正
         const existingVideo = document.querySelector("video");
         if (existingVideo) fixVideo(existingVideo);
 
-        // 新しく追加されるビデオを監視
         const observer = new MutationObserver((mutations) => {
           mutations.forEach((mutation) => {
             mutation.addedNodes.forEach((node) => {
@@ -310,8 +303,12 @@ export default function ARPage() {
         });
         observer.observe(document.body, { childList: true, subtree: true });
 
-        setupListeners(); // マーカー認識のリスナーを設定
-        setupAutoScaling(); // 自動サイズ調整を設定
+        // 💡 修正: DOMのパース待ちとして少し遅延させてからリスナーを設定
+        setTimeout(() => {
+          setupListeners();
+          setupAutoScaling();
+        }, 300);
+
         // 画面サイズ変更イベントを走らせて表示を整える
         setTimeout(() => window.dispatchEvent(new Event("resize")), 500);
       } else {
@@ -352,7 +349,7 @@ export default function ARPage() {
 
         {/* スキャン中 UI */}
         {status === "started" && !showSuccess && (
-          <div className="w-full h-full flex flex-col items-center justify-between p-8 pt-20">
+          <div className="w-full h-full flex flex-col items-center justify-between p-8 pt-20 pb-40">
             {/* 上部メッセージ */}
             <div className="text-center space-y-2">
               <div className="inline-block px-4 py-1.5 bg-black/40 backdrop-blur-md rounded-full border border-white/20">
