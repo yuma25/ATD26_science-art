@@ -60,11 +60,11 @@ grant all on public.user_badges to anon, authenticated, service_role;
 insert into public.badges (name, artist, model_url, image_url, target_index)
 values
   ('sample', 'sample', '/butterfly.glb', '/images/paintings/painting_0.jpg', 0),
-  ('お母さんの初水族館', '川越あけみ', '/whale.glb', '/images/paintings/painting_1.jpg', 1),
-  ('ヤドカリ', '高山那月', '/shellcrab.glb', '/images/paintings/painting_2.jpg', 2),
-  ('海底の置く', '可部谷清楓', '/sword.glb', '/images/paintings/painting_3.jpg', 3),
-  ('よすが', '中西玲奈', '/wave.glb', '/images/paintings/painting_4.jpg', 4),
-  ('遊々海月', '石垣実莉', '/jellyfish.glb', '/images/paintings/painting_5.jpg', 5);
+  ('お母さんの初水族館', '川越 あけみ', '/whale.glb', '/images/paintings/painting_1.jpg', 1),
+  ('ちょっと不思議な海の冒険', '高山 那月', '/shellcrab.glb', '/images/paintings/painting_2.jpg', 2),
+  ('海底の奥', '可部谷 清楓', '/sword.glb', '/images/paintings/painting_3.jpg', 3),
+  ('よすが', '中西 玲奈', '/wave.glb', '/images/paintings/painting_4.jpg', 4),
+  ('遊々海月', '石垣 実莉', '/jellyfish.glb', '/images/paintings/painting_5.jpg', 5);
 
 -- 7. 自動プロファイル作成トリガー
 create or replace function public.handle_new_user()
